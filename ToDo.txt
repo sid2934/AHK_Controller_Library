@@ -1,17 +1,11 @@
-Things to implement/look into
+Things to get done/look into in order from next to last
 
-To allow the user to select how ever many button combos they wish to, enable a Custom priority queue from some kind of config file.
-This custom priority queue will look at all button combinations the users wishes to use for each button starting with 1 and going to the last on. for example say they want the following buttons/combinations to exist; 1 + 2, 1 + 3, 1 + 3 + 4, 1 + 4, 2, 3, 3 + 4, 4, 5
-This queue should look for all buttons which have only one way to get triggered (i.e. they are by themself (5) in this case)
-Then once all are even if starts to analyze the best route to esove the buttons quickly the result should be.
-This is the first approach to this issue and is likly not the best solution. 
+) Get the ButtonHandler function in ControllerCore.ahk functioning
+	Needs to go through the Button Event Queue and see if all of the buttons for a event are pressed and if so
+	remove those buttons from the string and call the correct function, then continue with the rest of the buttons
 
-5
-1+2
-2
-1+3+4
-1+3
-1+4
-3+4
-3
-4
+) Optomize the Button Event Queue for better performance
+
+) Add documentation to the code added since last time
+
+) More

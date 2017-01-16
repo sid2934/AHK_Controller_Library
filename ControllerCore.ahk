@@ -295,14 +295,38 @@ class Controller{
 	;This can be though of as an array of the joysticks where controllerJoysticks[x] is the first joystick created
 	;NOT used by default must be manually used
 	controllerJoysticks := Object()
+	;This is the queue that will be used to trigger button events
+	;This is created from a csv file with the following format
+	; Keys,Function To Call
+	; The Keys are seperated with foward slashes and the function must be implemented before the script will launch.
+	; Examples:
+	; 2/3/4, 2_3_4_Event
+	; 1, 1_Event
+	; 3/5, 3_5_Event
+	controllerButtonQueue := new ButtonQueue()
 	
 	;<summary
 	;This is a constructor for the controller class
 	;</summary>
 	;<param="joystickNumber">The number of joystick for make a controller object for. Leave blank if not sure and will auto-detect the first controller</param>
-	__New(joystickNumber := 0){
-		
-		this.implementationCheck()
+	__New(joystickNumber := 0, buttonEnabled := true, buttonConfigFile := ""){
+		if(buttonEnabled == true ){
+			checkButtonsImplementation := true
+			if(buttonConfigFile == ""){
+			MsgBox, BUTTONS DISABLED `nNo button config file was specified. Cannot use buttons without a buttonConfigFile `n`nTo overide this give "override" as the second parameter to the controller constructor 
+			checkButtonsImplementation := false
+			}
+			else{
+				Loop, read, %buttonConfigFile%
+				{
+					this.controllerButtonQueue.AddCombo(A_LoopReadLine)
+				}
+			}
+		}
+		else{
+			checkButtonsImplementation := false
+		}
+		this.implementationCheck(checkButtonsImplementation)
 		
 		;find the joystick if not set
 		if(joystickNumber <= 0)
@@ -377,12 +401,24 @@ class Controller{
 		}
 	}
 	
-	implementationCheck(){
-		if(IsFunc("ButtonHandler") == false){
-			MsgBox, SCRIPT HAS STOPPED`nA "ButtonHandler()" function must exist`nThis functions job is to direct the controllers button state to the needed functions`n`nTo override this pass the "override" as the first parameter to the constructor
-			Exit, -1
+	implementationCheck(b){
+		if(b == true){
+			/*
+			if(IsFunc("ButtonHandler") == false){
+				MsgBox, SCRIPT HAS STOPPED`nA "ButtonHandler()" function must exist`nThis functions job is to direct the controllers button state to the needed functions`n`nTo override this pass the "override" as the second parameter to the constructor
+				Exit, -1
+				*/
+				buttonEvents := this.controllerButtonQueue.queue.Size
+				loop %buttonEvents%{
+					currentQueue := this.controllerButtonQueue.queue.queue[A_Index]
+					currentFunction := currentQueue.eventHandler
+					if(IsFunc(currentFunction) == false){
+						MsgBox % currentFunction "() Does not exist"
+					}
+				}
 		}
 	}
+	
 	
 	;<summary
 	;Returns a comma seperated string of the buttons that are pressed in the given range
@@ -503,4 +539,167 @@ class Controller{
 			return returnArray
 		}
 	}
+	
+	update{
+		get{
+			currentState := this.state
+			this.buttonHandler(currentState[Buttons])
+			
+			
+		}
+	}
+	
+	buttonHandler(pressedButtons){
+		StringSplit, output, pressedButtons, "`,"
+		numberOfPressedButtons := output0
+		buttonEvents := this.controllerButtonQueue.queue.Size
+			loop %buttonEvents%{
+				currentQueue := this.controllerButtonQueue.queue.queue[A_Index]
+				currentNumberOfKeys := currentQueue.numberOfKeys
+				currentKeys := currentQueue.trigger
+				if(numbersOfPressedButtons >= currentNumberOfKeys){
+					StringSplit, currentKeysOutput, currentKeys, "`/"
+					allKeysFound := true
+					loop %currentKeysOutput0%{
+						currentKeyFound := false
+						counter := A_Index + 1
+						loop %output0%{
+							if(currentKeysOutput%counter% == output%A_Index%){
+								currentKeyFound := true
+							}
+						}
+						if(currentKeyFound := false){
+							allKeysFound := false
+							break
+						}
+					}
+					if(allKeysFound == true){
+						MsgBox, HERE SOMEHOW
+					}
+				}
+			}
+	}
+	
+	
 }
+
+class buttonTrigger{
+	keys :=
+	numberKeys :=
+	function :=
+	
+	__New(k, f){
+		this.keys := k
+		;gets the number of times a char occurs in a string
+		StringReplace, k, k, /,, UseErrorLevel
+		this.numberKeys := ErrorLevel + 1
+		this.function := f
+	}
+	
+	trigger{
+		get{
+			return this.keys
+		}
+	}
+	
+	numberOfKeys{
+		get{
+			return this.numberKeys
+		}
+	}
+	
+	eventHandler{
+		get{
+			return this.function
+		}
+	}
+}
+
+class ButtonQueue{
+
+	__New(){
+		this.queue := new Queue()
+	}
+	
+	AddCombo(csvLine){
+		StringSplit, output, csvLine, "`,"
+		newTrigger := new buttonTrigger(output1, output2)
+		queueLength := this.queue.Size
+		if(queueLength == 0){
+			this.queue.Enqueue(newTrigger)
+		}
+		else{
+			loop %queueLength%{
+				tempQueueLocation := this.queue.queue[A_Index]
+				x := tempQueueLocation.numberOfKeys
+				y := newTrigger.numberOfKeys
+				if(x <y){
+					this.queue.Insert(newTrigger, A_Index)
+				}
+				else if(A_Index == queueLength){
+					this.queue.Enqueue(newTrigger)
+				}
+			}
+		}
+	}
+	
+}
+
+class Queue{
+
+	queue := Object()
+	count := 0
+	
+	__New{
+		
+	}
+	
+	Enqueue(data){
+		this.count++
+		this.queue.InsertAt(this.count, data)
+	}
+	
+	Insert(data, location){
+		this.count++
+		this.queue.InsertAt(location, data)
+	}
+	
+	Swap(locationA, locationB){
+		dataOfA := this.queue(locationA)
+		dataOfB := this.queue(locationB)
+		this.queue[locationA] := dataOfB
+		this.queue[locationB] := dataOfA
+	}
+	
+	Dequeue(){
+		if(this.count > 0){
+			this.count--
+			returnValue := this.queue[1]
+			this.queue.RemoveAt(1)
+			return returnValue
+		}
+		else{
+			return null
+		}
+	}
+
+	IsEmpty{
+		get{
+			return (0 == this.count)
+		}
+	}
+	
+	Size{
+		get{
+			return this.count
+		}
+	}
+
+}
+
+
+
+
+
+
+
