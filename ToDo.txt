@@ -10,6 +10,7 @@ Get the ButtonHandler function in ControllerCore.ahk functioning
 	of the 	stack plus holding down a button may also trigger the multi clicks. Possible implements a way to see if a button
 	has been released to prevent false triggers. This will more than likely take alot of work.
 
+2) Optomize the Button Event Queue for better performance
 
 3) Optomize the buttonHandler() function
 
