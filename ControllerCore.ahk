@@ -1,4 +1,4 @@
-#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
+;~ #NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 ;#Warn  ; Enable warnings to assist with detecting common errors. Commment out unless there is issues
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
@@ -432,20 +432,13 @@ class Controller{
 		}
 		counter := start
 		dif := (last + 1) - start
-		returnString := 
+		returnObject := Object() 
 		loop %dif%
 		{
-			if(this.controllerButtons[counter].state == True){
-				if(returnString != null){
-					returnString = %returnString%,%counter%
-				}
-				else{
-					returnString = %counter%
-				}
-			}
+			returnObject[counter] := this.controllerButtons[counter].state 
 			counter++
 		}
-		return returnString
+		return returnObject
 	}
 	
 	;<summary
@@ -545,39 +538,38 @@ class Controller{
 			currentState := this.state
 			this.buttonHandler(currentState[Buttons])
 			
-			
 		}
 	}
 	
+	;Currently Works
+	;Holy Shit lol
 	buttonHandler(pressedButtons){
-		StringSplit, output, pressedButtons, "`,"
-		numberOfPressedButtons := output0
-		buttonEvents := this.controllerButtonQueue.queue.Size
-			loop %buttonEvents%{
-				currentQueue := this.controllerButtonQueue.queue.queue[A_Index]
-				currentNumberOfKeys := currentQueue.numberOfKeys
-				currentKeys := currentQueue.trigger
-				if(numbersOfPressedButtons >= currentNumberOfKeys){
-					StringSplit, currentKeysOutput, currentKeys, "`/"
-					allKeysFound := true
-					loop %currentKeysOutput0%{
-						currentKeyFound := false
-						counter := A_Index + 1
-						loop %output0%{
-							if(currentKeysOutput%counter% == output%A_Index%){
-								currentKeyFound := true
-							}
-						}
-						if(currentKeyFound := false){
-							allKeysFound := false
-							break
-						}
-					}
-					if(allKeysFound == true){
-						MsgBox, HERE SOMEHOW
-					}
+		numberOfCombos :=  this.controllerButtonQueue.queue.Size
+		loop %numberOfCombos%{
+			buttonsMatch := true
+			currentQueue := this.controllerButtonQueue.queue.queue[A_Index]
+			currentCheckKeys := currentQueue.trigger
+			StringSplit, currentCheckKeys, currentCheckKeys, /
+			currentNumberOfKeys := currentQueue.numberOfKeys
+			
+			loop %currentNumberOfKeys%{
+				;MsgBox % currentCheckKeys%A_Index%
+				if(pressedButtons[currentCheckKeys%A_Index%] == false){
+					;MsgBox, buttons dont match
+					buttonsMatch := false
+					break
 				}
 			}
+			if(buttonsMatch == true){
+				;MsgBox, Inside Loop
+				loop %currentNumberOfKeys%{
+					pressedButtons[currentCheckKeys%A_Index%] := false
+					functionToCall := currentQueue.eventHandler
+				}
+				%functionToCall%()
+			}
+		}
+		
 	}
 	
 	

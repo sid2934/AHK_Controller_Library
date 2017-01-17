@@ -1,11 +1,18 @@
 Things to get done/look into in order from next to last
 
-) Get the ButtonHandler function in ControllerCore.ahk functioning
+Completed
+Get the ButtonHandler function in ControllerCore.ahk functioning
 	Needs to go through the Button Event Queue and see if all of the buttons for a event are pressed and if so
 	remove those buttons from the string and call the correct function, then continue with the rest of the buttons
 
-) Optomize the Button Event Queue for better performance
+1) Make/Fine a good Stack class to implement a double/triple click functionality. This my involve preventing the buttonHandler
+	function from running if nothing is pressed. The cycle may be (and more than likely is) to fast to only look at the top 
+	of the 	stack plus holding down a button may also trigger the multi clicks. Possible implements a way to see if a button
+	has been released to prevent false triggers. This will more than likely take alot of work.
 
-) Add documentation to the code added since last time
 
-) More
+3) Optomize the buttonHandler() function
+
+4) Add documentation to the code added since last time
+
+5) More
