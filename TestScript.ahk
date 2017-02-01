@@ -12,8 +12,17 @@ Loop{
 	;This is the main loop of the program
 }
 
-1_Event(){
-	MouseMove, 0, 1,, R
+1_Event(param){
+	if(param == "double"){
+		MsgBox, Double Click
+	}
+	else if(param == "long"){
+		MsgBox, Long Press
+	}
+	else{
+		MsgBox, "Single"
+		MouseMove, 0, 1,, R
+	}
 }
 
 2_Event(){
@@ -30,4 +39,10 @@ Loop{
 
 1_2_3_4_Event(){
 	MsgBox, Damn Straight
+}
+
+9_Event(param){
+	if(param == "double" || param == "long"){
+		MsgBox, Goal Achieved
+	}
 }

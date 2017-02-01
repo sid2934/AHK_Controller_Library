@@ -304,6 +304,8 @@ class Controller{
 	; 1, 1_Event
 	; 3/5, 3_5_Event
 	controllerButtonQueue := new ButtonQueue()
+	;This is the previous State of the controller. This is used when handling double/long button presses
+	previousControllerState :=
 	
 	;<summary
 	;This is a constructor for the controller class
@@ -400,6 +402,7 @@ class Controller{
 			}
 		}
 	}
+	
 	
 	implementationCheck(b){
 		if(b == true){
@@ -537,6 +540,7 @@ class Controller{
 		get{
 			currentState := this.state
 			this.buttonHandler(currentState[Buttons])
+			this.previousState := currentState
 			
 		}
 	}
@@ -566,7 +570,31 @@ class Controller{
 					pressedButtons[currentCheckKeys%A_Index%] := false
 					functionToCall := currentQueue.eventHandler
 				}
-				%functionToCall%()
+				;%functionToCall%()
+				if(currentQueue.lastCycleState == true){
+					if(currentQueue.timerStatus == false){
+						;Long Press
+						currentQueue.KillTimer()
+						%functionToCall%("long")
+					}
+				}
+				else if(currentQueue.lastCycleState == false){
+					if(currentQueue.timerStatus == true){
+						;Double Click
+						currentQueue.KillTimer()
+						%functionToCall%("double")
+					}
+					else{
+						currentQueue.StartTimer()
+					}
+				}
+				currentQueue.lastCycleState := true
+			}
+			else{
+					if(currentQueue.lastCycleState == true){
+						currentQueue.released := true
+					}
+					currentQueue.lastCycleState := false
 			}
 		}
 		
@@ -579,6 +607,10 @@ class buttonTrigger{
 	keys :=
 	numberKeys :=
 	function :=
+	pressedLastCycle := 
+	timerRunning :=
+	clickModifyTimer :=
+	releasedOnTimer :=
 	
 	__New(k, f){
 		this.keys := k
@@ -586,11 +618,21 @@ class buttonTrigger{
 		StringReplace, k, k, /,, UseErrorLevel
 		this.numberKeys := ErrorLevel + 1
 		this.function := f
+		this.pressedLastCycle := false
+		this.timerRunning :=false
+		this.clickModifyTimer := ObjBindMethod(this, "StopTimer")
+		this.releasedOnTimer := false
 	}
 	
 	trigger{
 		get{
 			return this.keys
+		}
+	}
+	
+	released{
+		set{
+			return this.releasedOnTimer := value
 		}
 	}
 	
@@ -605,6 +647,53 @@ class buttonTrigger{
 			return this.function
 		}
 	}
+	
+	lastCycleState{
+		get{
+			return this.pressedLastCycle
+		}
+		set{
+			return this.pressedLastCycle := value
+		}
+	}
+	
+	timerStatus{
+		get{
+			return this.timerRunning
+		}
+	}
+	
+	
+	StartTimer(){
+		;MsgBox, Timer Start
+		this.timerRunning := true
+		this.releasedOnTimer := false
+		temp := this.clickModifyTimer
+		SetTimer, %temp% , -300
+	}
+	
+	StopTimer(){
+		functionToCall := this.eventHandler
+		if(this.releasedOnTimer == false){
+			%functionToCall%("long")
+		}
+		else{
+			%functionToCall%("single")
+		}
+		this.releasedOnTimer := false
+		this.timerRunning := false
+		temp := this.clickModifyTimer
+		SetTimer, % temp, Off
+	}
+	
+	;This is used to kill the timer if another event i.e. double or long press triggers it
+	KillTimer(){
+		this.releasedOnTimer := false
+		this.timerRunning := false
+		temp := this.clickModifyTimer
+		SetTimer, % temp, Off
+	}
+	
 }
 
 class ButtonQueue{
