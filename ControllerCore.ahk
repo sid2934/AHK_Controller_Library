@@ -62,6 +62,8 @@ class CAxes{
 	name :=
 	;The controller number that AHK can use for access
 	controllerNumber :=
+	;The offset needed to make the axes default position equal to zero.
+	offset :=
 	
 	;<summary
 	;This is a constructor for the button class
@@ -69,11 +71,12 @@ class CAxes{
 	;<param="cNumber">The controller number</param>
 	;<param="aLetter">The axis letter</param>
 	;<param="n">The common name of the axis</param>
-	__New(cNumber, aLetter, n){
+	__New(cNumber, aLetter, o, n){
 		tempId = %cNumber%Joy%aLetter%
 		this.axisId := tempId
 		this.name := n
 		this.controllerNumber := cNumber
+		this.offset := o
 	}
 	
 	;<summary
@@ -81,7 +84,7 @@ class CAxes{
 	;</summary>
 	state {
 		get{
-			return GetKeyState(this.axisId)
+			return (GetKeyState(this.axisId) + this.offset)
 		}
 	}
 }
@@ -103,15 +106,6 @@ class CJoystick{
 	name :=
 	;The controller number that AHK can use for access
 	controllerNumber :=
-	;The needed offset to make the default location appear as 0 for the X axis
-	;Explanation:
-	;This and yOffset are used to make the resting location of the joystick appeat as (0,0)
-	;For example the Xbox controller rests at the middle of its range so the offset is 50
-	;for both x and y. This must be correct in order for the state, angle, magnitude functions
-	;to work properly.
-	xOffset :=
-	;The needed offset to make the default location appear as 0 for the Y axis
-	yOffset :=
 	;This is used to invert the results of the X Axis
 	;Explanation:
 	;This has multiple uses, first it can be used to correct the readings of the joystick state.
@@ -129,19 +123,15 @@ class CJoystick{
 	;<param="axX">The axis object of the joystick's X axis</param>
 	;<param="axY">The axis object of the joystick's Y axis</param>
 	;<param="n">The common name of the joystick</param>
-	;<param="xO">The X offset</param>
-	;<param="yO">The Y offset</param>
 	;<param="invX">Whether to invert the X axis or not</param>
 	;<param="invY">Whether to invert the X axis or not</param>
-	__New(cNumber, axX, axY, n, xO := 0, yO := 0, invX := false, invY := false){
+	__New(cNumber, axX, axY, n, invX := false, invY := false){
 		this.controllerNumber := cNumber
 		this.axisX := axX
 		this.axisY := axY
 		this.axisXId := this.axisX.axisId
 		this.axisYId := this.axisY.axisId
 		this.name := n
-		this.xOffset := xO
-		this.yOffset := yO
 		this.invertX := invX
 		this.invertY := invY
 	}
@@ -162,10 +152,10 @@ class CJoystick{
 		}
 		else{
 			invY := 1
-		}		
-		xCoord := (this.axisX.state - this.xOffset) * invX 
-		yCoord := (this.axisY.state - this.yOffset) * invY
-		
+		}
+		xCoord := this.axisX.state * invX 
+		yCoord := this.axisY.state * invY
+		;MsgBox % "X: " xCoord ", Y: " yCoord
 		if(xCoord > 0){
 			if(yCoord > 0){
 				quadrant := "firstQuadrant"
@@ -211,8 +201,8 @@ class CJoystick{
 	;Thi simply returns the distance from the (0,0) 
 	;</summary>
 	magnitude(){
-		xCoord := this.axisX.state - this.xOffset 
-		yCoord := this.axisY.state - this.yOffset
+		xCoord := this.axisX.state
+		yCoord := this.axisY.state
 		
 		return sqrt((xCoord)**2 +  (yCoord)**2)
 	}
@@ -306,12 +296,14 @@ class Controller{
 	controllerButtonQueue := new ButtonQueue()
 	;This is the previous State of the controller. This is used when handling double/long button presses
 	previousControllerState :=
+	;This is the current method for handling the joystick event calls
+	joystickQueue := new Queue()
 	
 	;<summary
 	;This is a constructor for the controller class
 	;</summary>
 	;<param="joystickNumber">The number of joystick for make a controller object for. Leave blank if not sure and will auto-detect the first controller</param>
-	__New(joystickNumber := 0, buttonEnabled := true, buttonConfigFile := ""){
+	__New(joystickNumber := 0, buttonEnabled := true, buttonConfigFile := "", joystickEnabled := true, joystickConfigFile := ""){
 		if(buttonEnabled == true ){
 			checkButtonsImplementation := true
 			if(buttonConfigFile == ""){
@@ -325,10 +317,24 @@ class Controller{
 				}
 			}
 		}
-		else{
-			checkButtonsImplementation := false
+		if(joystickEnabled == true ){
+			checkJoystickImplementation := true
+			if(joystickConfigFile == ""){
+			MsgBox, Joysticks DISABLED `nNo button config file was specified. Cannot use joysticks without a buttonConfigFile `n`nTo overide this give "override" as the fourth parameter to the controller constructor 
+			checkJoystickImplementation := false
+			}
+			else{
+				Loop, read, %joystickConfigFile%
+				{
+					temp := new joystickTrigger(A_LoopReadLine)
+					this.joystickQueue.Enqueue(temp)
+				}
+			}
 		}
-		this.implementationCheck(checkButtonsImplementation)
+		else{
+			checkJoystickImplementation := false
+		}
+		this.implementationCheck(checkButtonsImplementation, checkJoystickImplementation)
 		
 		;find the joystick if not set
 		if(joystickNumber <= 0)
@@ -369,29 +375,36 @@ class Controller{
 				GetKeyState, joy_info, %JoystickNumber%JoyInfo
 				GetKeyState, joy_axes, %JoystickNumber%JoyAxes
 				this.numberOfAxes := joy_axes
-				newAxis := new CAxes(this.controllerNumber, "X", "X")
+				cNumber := this.controllerNumber
+				GetKeyState, tempOffset, %cNumber%JoyX
+				newAxis := new CAxes(this.controllerNumber, "X", (0 - tempOffset), "X")
 				this.controllerAxes.Push(newAxis)
-				newAxis := new CAxes(this.conxtrollerNumber, "Y", "Y")
+				GetKeyState, tempOffset, %cNumber%JoyY
+				newAxis := new CAxes(this.conxtrollerNumber, "Y", (0 - tempOffset), "Y")
 				this.controllerAxes.Push(newAxis)
 				
 				IfInString, joy_info, Z
 				{
-					newAxis := new CAxes(this.controllerNumber, "Z", "Z")
+					GetKeyState, tempOffset, %cNumber%JoyZ
+					newAxis := new CAxes(this.controllerNumber, "Z",(0 - tempOffset), "Z")
 					this.controllerAxes.Push(newAxis)
 				}
 				IfInString, joy_info, R
 				{
-					newAxis := new CAxes(this.controllerNumber, "R", "R")
+					GetKeyState, tempOffset, %cNumber%JoyR
+					newAxis := new CAxes(this.controllerNumber, "R", (0 - tempOffset), "R")
 					this.controllerAxes.Push(newAxis)
 				}
 				IfInString, joy_info, U
 				{
-					newAxis := new CAxes(this.controllerNumber, "U", "U")
+					GetKeyState, tempOffset, %cNumber%JoyU
+					newAxis := new CAxes(this.controllerNumber, "U", (0 - tempOffset), "U")
 					this.controllerAxes.Push(newAxis)
 				}
 				IfInString, joy_info, V
 				{
-					newAxis := new CAxes(this.controllerNumber, "V", "V")
+					GetKeyState, tempOffset, %cNumber%JoyV
+					newAxis := new CAxes(this.controllerNumber, "V", (0 - tempOffset), "V")
 					this.controllerAxes.Push(newAxis)
 				}
 				IfInString, joy_info, P
@@ -404,16 +417,21 @@ class Controller{
 	}
 	
 	
-	implementationCheck(b){
+	implementationCheck(b, j){
 		if(b == true){
-			/*
-			if(IsFunc("ButtonHandler") == false){
-				MsgBox, SCRIPT HAS STOPPED`nA "ButtonHandler()" function must exist`nThis functions job is to direct the controllers button state to the needed functions`n`nTo override this pass the "override" as the second parameter to the constructor
-				Exit, -1
-				*/
 				buttonEvents := this.controllerButtonQueue.queue.Size
 				loop %buttonEvents%{
 					currentQueue := this.controllerButtonQueue.queue.queue[A_Index]
+					currentFunction := currentQueue.eventHandler
+					if(IsFunc(currentFunction) == false){
+						MsgBox % currentFunction "() Does not exist"
+					}
+				}
+		}
+		if(j == true){
+			joystickEvents := this.joystickQueue.Size
+				loop %joystickEvents%{
+					currentQueue := this.joystickQueue.queue[A_Index]
 					currentFunction := currentQueue.eventHandler
 					if(IsFunc(currentFunction) == false){
 						MsgBox % currentFunction "() Does not exist"
@@ -513,15 +531,14 @@ class Controller{
 	;<param="axX">The array index for the joystick's X axis</param>
 	;<param="axY">The array index for the joystick's Y axis/param>
 	;<param="n">The common name of the joystick</param>
-	;<param="xO">The X offset</param>
-	;<param="yO">The Y offset</param>
 	;<param="invX">Whether to invert the X axis or not</param>
 	;<param="invY">Whether to invert the X axis or not</param>
-	createJoystick(axX, axY, n, xO := 0, yO := 0, invX := false, invY:= false){
+	createJoystick(axX, axY, n, invX := false, invY := false){
 		this.numberOfJoysticks++
-		newJoy := new CJoystick(this.controllerNumber, this.controllerAxes[axX], this.controllerAxes[ax], n, xO, yO, invX, invY)
-		this.controllerAxes.RemoveAt(axX)
-		this.controllerAxes.RemoveAt(axY)
+		newJoy := new CJoystick(this.controllerNumber, this.controllerAxes[axX], this.controllerAxes[axY], n, invX, invY)
+		;this.numberOfAxes := this.numberOfAxes - 2
+		;this.controllerAxes.RemoveAt(axX)
+		;this.controllerAxes.RemoveAt(axY)
 		this.controllerJoysticks.Push(newJoy)
 	}
 	
@@ -603,6 +620,7 @@ class Controller{
 		
 	}
 	
+	
 	axesHandler(axesState){
 		
 	}
@@ -611,8 +629,32 @@ class Controller{
 		
 	}
 	
+	;In development
 	joystickHandler(joystickState){
-		
+		numberOfJoy := this.numberOfJoysticks
+		Loop %numberOfJoy%
+		{
+			if(this.joystickQueue.queue[A_Index])
+		}
+	}
+}
+
+class joystickTrigger{
+	joystickNumber :=
+	deadzoneRadius :=
+	function :=
+	
+	__New(csvLine){
+		StringSplit, output, csvLine, "`,"
+		this.joystickNumber := output1
+		this.deadzoneRadius := output2
+		this.function := output3
+	}
+	
+	eventHandler{
+		get{
+			return this.function
+		}
 	}
 }
 

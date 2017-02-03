@@ -2,13 +2,17 @@
 #Include ControllerCore.ahk
 
 ;Creates a controller from the first joystick detected
-Controller := new Controller(,true,"D:/Users/austi/Desktop/AHK Git/AHK_Controller_Library/buttonConfig.csv")
+Controller := new Controller(,true,"D:/Users/austi/Desktop/AHK Git/AHK_Controller_Library/buttonConfig.csv", true, "D:/Users/austi/Desktop/AHK Git/AHK_Controller_Library/joystickConfig.csv")
 ;Binds two axes to a single "Joystick"
-Controller.createJoystick(1, 2, "Left", 50, 50, false, true)
-Controller.createJoystick(5, 4, "Right", 50, 50, false, true)
+;MsgBox % Controller.numberOfAxes
+Controller.createJoystick(1, 2, "Left", false, true)
+Controller.createJoystick(5, 4, "Right", false, true)
+;MsgBox % Controller.numberOfAxes
 
 Loop{
 	Controller.update
+	;string := (Controller.state)[4]
+	;MsgBox % string
 	;This is the main loop of the program
 }
 
@@ -45,4 +49,12 @@ Loop{
 	if(param == "double" || param == "long"){
 		MsgBox, Goal Achieved
 	}
+}
+
+Left_Stick_Event(){
+	
+}
+
+Right_Stick_Event(){
+	
 }
