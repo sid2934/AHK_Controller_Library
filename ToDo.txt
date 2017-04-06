@@ -1,7 +1,7 @@
 Things to get done/look into in order from next to last
 
 Completed
-Data Before the next one was.
+Date Before the next one was.
 Get the ButtonHandler function in ControllerCore.ahk functioning
 	Needs to go through the Button Event Queue and see if all of the buttons for a event are pressed and if so
 	remove those buttons from the string and call the correct function, then continue with the rest of the buttons

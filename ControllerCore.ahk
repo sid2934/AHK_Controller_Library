@@ -212,7 +212,7 @@ class CJoystick{
 	;</summary>
 	state{
 		get{
-			return "["this.angle()","this.magnitude()"]"
+			return {"Angle": this.angle() , "Magnitude": this.magnitude()}
 		}
 	}
 	
@@ -509,6 +509,7 @@ class Controller{
 		}
 		counter := start
 		dif := (last + 1) - start
+		/*
 		returnString := 
 		
 		Loop %dif%{
@@ -522,6 +523,16 @@ class Controller{
 			counter++
 		}
 		return returnString
+		*/
+		
+		returnArray := Object()
+		
+		Loop %dif%{
+			currentValue := this.controllerJoysticks[counter].state
+			returnArray.Push(currentValue)
+			counter++
+		}
+		return returnArray
 	}
 	
 	;<summary
@@ -562,7 +573,7 @@ class Controller{
 			this.buttonHandler(currentState[Buttons])
 			this.axesHandler(currentState[Axes])
 			this.povHandler(currentState[POV])
-			this.joystickHandler(currentState[Joystick])
+			this.joystickHandler(currentState[Joysticks])
 			this.previousState := currentState
 			
 		}
@@ -634,7 +645,15 @@ class Controller{
 		numberOfJoy := this.numberOfJoysticks
 		Loop %numberOfJoy%
 		{
-			if(this.joystickQueue.queue[A_Index])
+			currentQueue :=this.joystickQueue.queue[A_Index]
+			currentButton :=  joystickState[currentQueue.trigger]
+			currentDeadzone := currentQueue.deadzone
+			if(currentDeadzone <= currentButton.Magnitude){
+				functionToCall := this.joystickQueue.queue[A_Index].eventHandler
+				angle := currentButton.Angle
+				mag := currentButton.Magnitude  - currentDeadzone
+				%functionToCall%({"Angle": angle, "Magnitude": mag})
+			}
 		}
 	}
 }
@@ -649,6 +668,18 @@ class joystickTrigger{
 		this.joystickNumber := output1
 		this.deadzoneRadius := output2
 		this.function := output3
+	}
+	
+	trigger{
+		get{
+			return this.joystickNumber
+		}
+	}
+	
+	deadzone{
+		get{
+			return this.deadzoneRadius
+		}
 	}
 	
 	eventHandler{
@@ -834,8 +865,6 @@ class Queue{
 }
 
 
-
-
-
-
-
+OpenKeyboard(){
+	
+}
