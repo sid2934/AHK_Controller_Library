@@ -1,26 +1,67 @@
-k_map := Object()
+SetTitleMatchMode, 3
+SetTitleMatchMode, Slow
+
+global keyboardIsOpen := false
+capsLockOn := false
+controlPressed := false
+shiftPressed := false
+altPressed := false
+
+global k_map := Object()
 class KeyMap{
 
 	__New(u, d, l , r){
-		this.upKey := u
-		this.downKey := d
-		this.leftKey := l
-		this.rightKey := r
+		this.uKey := u
+		this.dKey := d
+		this.lKey := l
+		this.rKey := r
+	}
+	
+	upKey{
+		get{
+			value := this.uKey
+			value = %value%
+			return value
+		}
+	}
+	
+	downKey{
+		get{
+			value := this.dKey
+			value = %value%
+			return value
+		}
+	}
+	
+	leftKey{
+		get{
+			value := this.lKey
+			value = %value%
+			return value
+		}
+	}
+	
+	rightKey{
+		get{
+			value := this.rKey
+			value = %value%
+			return value
+		}
 	}
 }
 
 k_map["Fn"] := new KeyMap("Ctrl", "Tab", "Bk", "``")
 k_map["``"]  := new KeyMap("Win", "Tab", "Fn", "1")
-k_map["1"] := new KeyMap("Win", "Q", "``", "2")
-k_map["2"] := new KeyMap("Alt", "W", "1", "3")
-k_map["3"] := new KeyMap("Space", "E", "2", "4")
-k_map["4"] := new KeyMap("Space", "R", "3", "5")
-k_map["5"] := new KeyMap("Space", "T", "4", "6")
-k_map["6"] := new KeyMap("Space", "Y", "5", "7")
-k_map["7"] := new KeyMap("Space", "U", "6", "8")
-k_map["8"] := new KeyMap("Space", "I", "7", "9")
-k_map["9"] := new KeyMap("Space", "O", "8", "0")
-k_map["0"] := new KeyMap("Space", "P", "9" ,"-")
+k_map[1] := new KeyMap("Win", "Q", "``", "2")
+k_map[2] := new KeyMap("Alt", "W", "1", "3")
+k_map[3] := new KeyMap("Space", "E", "2", "4")
+k_map[4] := new KeyMap("Space", "R", "3", "5")
+k_map[5] := new KeyMap("Space", "T", "4", "6")
+k_map[6] := new KeyMap("Space", "Y", "5", "7")
+k_map[7] := new KeyMap("Space", "U", "6", "8")
+k_map[8] := new KeyMap("Space", "I", "7", "9")
+k_map[9] := new KeyMap("Space", "O", "8", "0")
+k_map[0] := new KeyMap("Space", "P", "9" ,"-")
 k_map["-"] := new KeyMap("'", "[", "0", "=")
 k_map["="] := new KeyMap("Enter", "]", "-", "Bk")
 k_map["Bk"] := new KeyMap("Enter", "\", "=", "Fn")
@@ -41,18 +82,18 @@ k_map["]"] := new KeyMap("=", "Enter", "[", "\")
 k_map["\"] := new KeyMap("Bk", "Enter", "]", "Tab")
 
 k_map["Caps Lock"] := new KeyMap("Tab","Shift","Enter","A")
-k_map["A"] := new KeyMap("Q", "Z", "S","Caps Lock")
-k_map["S"] := new KeyMap("W", "X", "D","A")
-k_map["D"] := new KeyMap("E", "C", "F","S")
-k_map["F"] := new KeyMap("R", "V", "G","D")
-k_map["G"] := new KeyMap("T", "B", "H","F")
-k_map["H"] := new KeyMap("Y", "N", "J","G")
-k_map["J"] := new KeyMap("U", "M", "K","H")
-k_map["K"] := new KeyMap("I", "`,", "L","J")
-k_map["L"] := new KeyMap("O", ".", ";","K")
-k_map[";"] := new KeyMap("P", "/", "'","L")
-k_map["'"] := new KeyMap("[", "-", "Enter",";")
-k_map["Enter"] := new KeyMap("]", "=", "Caps Lock", "'")
+k_map["A"] := new KeyMap("Q", "Z", "Caps Lock", "S")
+k_map["S"] := new KeyMap("W", "X", "A","D")
+k_map["D"] := new KeyMap("E", "C", "S","F")
+k_map["F"] := new KeyMap("R", "V", "D","G")
+k_map["G"] := new KeyMap("T", "B", "F","H")
+k_map["H"] := new KeyMap("Y", "N", "G","J")
+k_map["J"] := new KeyMap("U", "M", "H","K")
+k_map["K"] := new KeyMap("I", "`,", "J","L")
+k_map["L"] := new KeyMap("O", ".", "K",";")
+k_map[";"] := new KeyMap("P", "/", "L","'")
+k_map["'"] := new KeyMap("[", "-", ";","Enter")
+k_map["Enter"] := new KeyMap("]", "=", "'", "Caps Lock")
 
 k_map["Shift"] := new KeyMap("Caps Lock","Ctrl","/","Z")
 k_map["Z"] := new KeyMap("A", "Win", "Shift", "X")
@@ -71,7 +112,9 @@ k_map["Win"] := new KeyMap("Z", "1", "Ctrl", "Alt")
 k_map["Alt"] := new KeyMap("X", "2", "Win","Space")
 k_map["Space"] := new KeyMap("C", "3", "Alt", "Ctrl")
 
-k_currentKey := "Enter"
+global k_currentKey := "Enter"
+global k_ID  :=
+
 
 k_FontSize = 10
 k_FontName = Verdana  ; This can be blank to use the system's default font.
@@ -182,12 +225,16 @@ Gui, Keyboard: Add, Button, xs y+%k_KeyMargin% %k_PlusHalfKeySize%, Ctrl  ; Auto
 Gui, Keyboard: Add, Button,x+%k_KeyMargin% %k_PlusHalfKeySize%, Win      ; Auto-width.
 Gui, Keyboard: Add, Button, %k_Position%, Alt      ; Auto-width.
 Gui, Keyboard: Add, Button, h%k_KeyHeight% x+%k_KeyMargin% %k_SpaceKeySize%, Space
+;Gui, Keyboard: Add, Text, vCurrentPosition,  Here it is
+;Gui, Keyboard: Add, Text, vThisString,  Here it is 2
 
-
-Gui, Keyboard: Show
+openKeyboard(){
+Gui, Keyboard: Show, 
+keyboardIsOpen := true
 k_IsVisible = y
 
-WinGet, k_ID, ID, A   ; Get its window ID.
+WinGet, temp_k_ID, ID, A   ; Get its window ID.
+k_ID := temp_k_ID
 WinGetPos,,, k_WindowWidth, k_WindowHeight, A
 
 ;---- Position the keyboard at the bottom of the screen (taking into account
@@ -209,9 +256,146 @@ k_WindowY -= %k_WindowHeight%
 
 WinMove, A,, %k_WindowX%, %k_WindowY%
 WinSet, AlwaysOnTop, On, ahk_id %k_ID%
-WinSet, TransColor, %TransColor% 220, ahk_id %k_ID%
+WinSet, Disable,, ahk_id %k_ID%
+;WinSet, TransColor, %TransColor% 220, ahk_id %k_ID%
 
-ControlClick, %k_currentKey%, ahk_id %k_ID%, , LEFT, 1, Ds
+;GuiControl, Keyboard:, ThisString, %k_ID%
+ControlClick, %k_currentKey%, ahk_id %k_ID%, , LEFT, 1
+;GuiControl, Keyboard: ,CurrentPosition, %k_currentKey%
+Gui, Keyboard: +E0x08000000
+}
 
+closeKeyboard(){
+	keyboardIsOpen := false
+	Gui, Keyboard: Hide	
+	Sleep 500
+}
 
-return
+toggleKeyboard(){
+	if(keyboardIsOpen == false){
+		openKeyboard()
+	}else{
+		closeKeyboard()
+	}
+}
+
+keyboardMoveLeft(){
+	k_currentKey := k_map[ k_currentKey].leftKey
+	;GuiControl, Keyboard:, ThisString, %k_ID%
+	;GuiControl, Keyboard: ,CurrentPosition, %k_currentKey%
+	ControlClick, %k_currentKey%, ahk_id %k_ID%, , LEFT, 1
+	Sleep, 60
+}
+
+keyboardMoveRight(){
+	k_currentKey := k_map[k_currentKey].rightKey
+	;GuiControl, Keyboard:, ThisString, %k_ID%
+	;GuiControl, Keyboard: ,CurrentPosition, %k_currentKey%
+	ControlClick, %k_currentKey%, ahk_id %k_ID%, , LEFT, 1
+	Sleep, 60
+}
+
+keyboardMoveUp(){
+	k_currentKey := k_map[k_currentKey].upKey
+	;GuiControl, Keyboard:, ThisString, %k_ID%
+	;GuiControl, Keyboard: ,CurrentPosition, %k_currentKey%
+	ControlClick, %k_currentKey%, ahk_id %k_ID%, , LEFT, 1
+	Sleep, 60
+}
+
+keyboardMoveDown(){
+	k_currentKey := k_map[k_currentKey].downKey
+	;GuiControl, Keyboard:, ThisString, %k_ID%
+	;GuiControl, Keyboard: ,CurrentPosition, %k_currentKey%
+	ControlClick, %k_currentKey%, ahk_id %k_ID%, , LEFT, 1
+	Sleep, 60
+}
+
+keyboardEnter(override := ""){
+
+	if(k_currentKey == "Caps Lock"){
+		capsLockOn := !capsLockOn
+	}
+	else if(k_currentKey == "Shift"){
+		shiftPressed := !shiftPressed
+	}
+	else if(k_currentKey == "Ctrl"){
+		controlPressed := !controlPressed
+	}
+	else if(k_currentKey == "Tab"){
+		Send {Tab}
+	}
+	else if(k_currentKey == "Fn"){
+		
+	}
+	else if(k_currentKey == "Bk"){
+		Send {Backspace}
+	}
+	else if(k_currentKey == "Win"){
+		Send {LWin}
+	}
+	else if(k_currentKey == "Alt"){
+		altPressed := !altPressed
+	}
+	else if(k_currentKey == "Enter"){
+		Send {Enter}
+	}
+	else if(k_currentKey == "Space"){
+		Send {Space}
+	}
+	else{
+		;MsgBox % controlPressed
+		if(capsLockOn == true){
+			keyToSend := k_currentKey
+		}
+		else{
+			StringLower, keyToSend, k_currentKey
+		}
+		keyMod =
+		if(shiftPressed == true){
+			keyMod = %keyMod%+
+		}
+		if(controlPressed == true){
+			keyMod = %keyMod%^
+		}
+		if(altPressed == true){
+			keyMod = %keyMod%!
+		}
+		
+		Send %keyMod%%keyToSend%
+		controlPressed := false
+		shiftPressed := false
+		altPressed := false
+		/*
+		if(shiftPressed == true){
+			MsgBox, Should not be here
+			if(controlPressed == true){
+				if(altPressed == true){
+					Send ^!+{%keyToSend%}
+				}
+				else{
+					Send ^+{%keyToSend%}
+				}
+			}
+			else{
+				Send +{%keyToSend%}
+			}
+		}
+		else{
+			if(controlPressed == true){
+				if(altPressed == true){
+					Send ^!{%keyToSend%}
+				}
+				else{
+					;MsgBox, It gets here
+					Send ^{%keyToSend%}
+				}
+			}
+			else{
+				Send %keyModifier%{%keyToSend%}
+			}
+		}
+		*/
+		
+	}
+}

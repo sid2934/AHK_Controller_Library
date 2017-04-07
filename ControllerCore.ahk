@@ -4,6 +4,8 @@ SendMode Input  ; Recommended for new scripts due to its superior speed and reli
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 CoordMode, Mouse, Screen ;Sets the Coordinate Mode for all "Mouse" methods
 
+#Include D:/Users/austi/Desktop/AHK Git/AHK_Controller_Library/Extended Library/KeyboardGUI.ahk
+
 ;This simply adds some readibility for my sake
 null :=
 
@@ -864,7 +866,3 @@ class Queue{
 
 }
 
-
-OpenKeyboard(){
-	
-}
