@@ -28,6 +28,8 @@ To Do
 
 STOPING POINT OF THE NIGHT -- Working on the implementation of the joystickHandler() class. my need to change how the states are returned like I did for the buttons. Array returns seem to work much better than a formatted string (Go figure right...), so this implementation needs to change, but will make some debugging of the states more difficult. Sacrafice that needs to be made at this point.
 
+1.5) Develop a simple On-Screen Keyboard as a side task to get away from the heavy coding for a bit
+
 2) Remove Axes that are bound in a joystick pairing from the controllers axes array.
 
 3) Implement a controller profile that auto names and configures controllers based on the driver/controller type
