@@ -288,7 +288,7 @@ class Controller{
 	;NOT used by default must be manually used
 	controllerJoysticks := Object()
 	;This is the queue that will be used to trigger button events
-	;This is created from a csv file with the following format
+	;This is created in the config.ini file under the "Button Config Section" using a standard csv format with the following format
 	; Keys,Function To Call
 	; The Keys are seperated with foward slashes and the function must be implemented before the script will launch.
 	; Examples:
@@ -300,35 +300,52 @@ class Controller{
 	previousControllerState :=
 	;This is the current method for handling the joystick event calls
 	joystickQueue := new Queue()
+	;This queue is used to  store the pov action that are defined in the config.ini file under the "POV Config" Section 
+	povDict := new Dictionary()
+	;This queue is used to  store the axes action that are defined in the config.ini file under the "Axes Config" Section 
+	;Any Axes that has been added to a joystick will be ignored in this section
+	axesQueue := new Queue()
 	
 	;<summary
 	;This is a constructor for the controller class
 	;</summary>
 	;<param="joystickNumber">The number of joystick for make a controller object for. Leave blank if not sure and will auto-detect the first controller</param>
-	__New(joystickNumber := 0, buttonEnabled := true, buttonConfigFile := "", joystickEnabled := true, joystickConfigFile := ""){
+	__New(joystickNumber := 0, configPath := ""){
+		IniRead, buttonEnabled, %configPath%, General, Buttons_Enable
+		IniRead, joystickEnabled, %configPath%, General, Joysticks_Enable
+		IniRead, povEnabled, %configPath%, General, Pov_Enabled
+		IniRead, axesEnable, %configPath%, General, Axes_Enabled
+		
 		if(buttonEnabled == true ){
 			checkButtonsImplementation := true
-			if(buttonConfigFile == ""){
-			MsgBox, BUTTONS DISABLED `nNo button config file was specified. Cannot use buttons without a buttonConfigFile `n`nTo overide this give "override" as the second parameter to the controller constructor 
+			IniRead, buttonConfigSection, %configPath%, Button Config
+			if(buttonConfigSection == ""){
+			MsgBox, BUTTONS DISABLED `nNo button config file was specified. Cannot use buttons without a Button Config Section
 			checkButtonsImplementation := false
 			}
 			else{
-				Loop, read, %buttonConfigFile%
+				
+				Loop, Parse, buttonConfigSection, "`n"
 				{
-					this.controllerButtonQueue.AddCombo(A_LoopReadLine)
+					this.controllerButtonQueue.AddCombo(A_LoopField)
 				}
 			}
 		}
+		else{
+			checkButtonsImplementation := false
+		}
+		
 		if(joystickEnabled == true ){
 			checkJoystickImplementation := true
-			if(joystickConfigFile == ""){
-			MsgBox, Joysticks DISABLED `nNo button config file was specified. Cannot use joysticks without a buttonConfigFile `n`nTo overide this give "override" as the fourth parameter to the controller constructor 
+			IniRead, joystickConfigSection, %configPath%, Joystick Config
+			if(joystickConfigSection == ""){
+			MsgBox, Joysticks DISABLED `nNo joystick config section was specified. Cannot use joysticks without a Joystick Config Section
 			checkJoystickImplementation := false
 			}
 			else{
-				Loop, read, %joystickConfigFile%
+				Loop, Parse, joystickConfigSection, `n
 				{
-					temp := new joystickTrigger(A_LoopReadLine)
+					temp := new joystickTrigger(A_LoopField)
 					this.joystickQueue.Enqueue(temp)
 				}
 			}
@@ -336,11 +353,40 @@ class Controller{
 		else{
 			checkJoystickImplementation := false
 		}
-		this.implementationCheck(checkButtonsImplementation, checkJoystickImplementation)
+		
+		if(povEnabled == true){
+			checkPovImplementation := true
+			IniRead, povConfigSection, %configPath%, POV Config
+			if(povConfigSection == ""){
+				MsgBox, POV DISABLED `nNo pov config section was specified. Cannot use joysticks without a POV Config Section
+				checkPovImplementation := false
+			}
+			else{
+				Loop, Parse, povConfigSection, `n
+				{
+					loopString = %A_LoopField%
+					StringSplit, output, loopString, "`,"
+					value := output1
+					function := output2
+					this.povDict.Add(value,function)
+				}
+			}
+		}
+		else{
+			checkPovImplementation := false
+		}
+		
+		if(axesEnable == true){
+			checkAxesImplementation := true
+		}
+		else{
+			checkAxesImplementation := false
+		}
+		
+		this.implementationCheck(checkButtonsImplementation, checkJoystickImplementation, checkPovImplementation, checkAxesImplementation)
 		
 		;find the joystick if not set
-		if(joystickNumber <= 0)
-		{
+		if(joystickNumber <= 0){
 			Loop 16  ; Query each joystick number to find out which ones exist.
 			{
 				GetKeyState, JoyName, %A_Index%JoyName
@@ -419,7 +465,7 @@ class Controller{
 	}
 	
 	
-	implementationCheck(b, j){
+	implementationCheck(b, j, p, a){
 		if(b == true){
 				buttonEvents := this.controllerButtonQueue.queue.Size
 				loop %buttonEvents%{
@@ -432,13 +478,27 @@ class Controller{
 		}
 		if(j == true){
 			joystickEvents := this.joystickQueue.Size
-				loop %joystickEvents%{
-					currentQueue := this.joystickQueue.queue[A_Index]
-					currentFunction := currentQueue.eventHandler
-					if(IsFunc(currentFunction) == false){
-						MsgBox % currentFunction "() Does not exist"
-					}
+			loop %joystickEvents%{
+				currentQueue := this.joystickQueue.queue[A_Index]
+				currentFunction := currentQueue.eventHandler
+				if(IsFunc(currentFunction) == false){
+					MsgBox % currentFunction "() Does not exist"
 				}
+			}
+		}
+		
+		if(p == true){
+			numberOfPovEvents := this.povDict.Size
+			Loop %numberOfPovEvents%{
+				currentFunction := this.povDict.valueOf(this.povDict.getKeyFromInt(A_Index))
+				if(IsFunc(currentFunction) == false){
+					MsgBox % currentFunction "() Does not exist"
+				}
+			}
+		}
+		
+		if(a == true){
+			
 		}
 	}
 	
@@ -480,11 +540,14 @@ class Controller{
 		loop %dif%
 		{
 			currentValue := this.controllerAxes[counter].state
-			if(returnString != null){
-				returnString = %returnString%,%currentValue%
-			}
-			else{
-				returnString = %currentValue%
+			;This if statment is used to ignore any of the axes added to create a joystick
+			if(currentValue != ""){
+				if(returnString != null){
+					returnString = %returnString%,%currentValue%
+				}
+				else{
+					returnString = %currentValue%
+				}
 			}
 			counter++
 		}
@@ -511,21 +574,6 @@ class Controller{
 		}
 		counter := start
 		dif := (last + 1) - start
-		/*
-		returnString := 
-		
-		Loop %dif%{
-			currentValue := this.controllerJoysticks[counter].state
-			if(returnString != null){
-				returnString = %returnString%,%currentValue%
-			}
-			else{
-				returnString = %currentValue%
-			}
-			counter++
-		}
-		return returnString
-		*/
 		
 		returnArray := Object()
 		
@@ -549,9 +597,8 @@ class Controller{
 	createJoystick(axX, axY, n, invX := false, invY := false){
 		this.numberOfJoysticks++
 		newJoy := new CJoystick(this.controllerNumber, this.controllerAxes[axX], this.controllerAxes[axY], n, invX, invY)
-		;this.numberOfAxes := this.numberOfAxes - 2
-		;this.controllerAxes.RemoveAt(axX)
-		;this.controllerAxes.RemoveAt(axY)
+		this.controllerAxes[axX] := "ignore"
+		this.controllerAxes[axY] := "ignore"
 		this.controllerJoysticks.Push(newJoy)
 	}
 	
@@ -633,13 +680,19 @@ class Controller{
 		
 	}
 	
-	
 	axesHandler(axesState){
 		
 	}
 	
+	
 	povHandler(povState){
-		
+		if(povState != -1){
+			
+			functionToCall := this.povDict.valueOf(povState)
+			if(functionToCall != ""){
+				%functionToCall%()
+			}
+		}
 	}
 	
 	;In development
@@ -658,6 +711,34 @@ class Controller{
 			}
 		}
 	}
+}
+
+class axesTrigger{
+
+}
+
+class povTrigger{
+	povValue :=
+	function :=
+	
+	__New(csvLine){
+		StringSplit, output, csvLine, "`,"
+		this.povValue := output1
+		this.function := output2
+	}
+	
+	trigger{
+		get{
+			return this.povValue
+		}
+	}
+	
+	eventHandler{
+		get{
+			return this.function
+		}
+	}
+	
 }
 
 class joystickTrigger{
@@ -866,3 +947,62 @@ class Queue{
 
 }
 
+class Dictionary{
+
+	__New(){
+		if(startingContents == ""){
+			this.contents := startingContents
+			this.size := 0
+			this.keys := Object()
+		}
+		else{
+			;All of this needs to be added
+			;ToDo: This entire struct pretty much lol
+			startingContents := startingContents "|"
+			MsgBox % startingContents
+			this.contents :=startingContents
+			StringReplace, startingContents, startingContents, |,, UseErrorLevel
+			this.size := ErrorLevel 
+		}
+	}
+
+	Add(key, value){
+		oldContents := this.contents
+		newContent =  %oldContents%%key%:%value%|
+		this.contents := newContent
+		x := this.contents
+		this.size++
+		this.keys.Push(key)
+	}
+	
+	Remove(){
+		MsgBox, Needs to be added
+	}
+	
+	Size{
+		get{
+			return this.size
+		}
+	}
+
+	getKeyFromInt(int){
+		return this.keys[int]
+	}
+	
+	
+	valueOf(key) {
+		dictName := this.contents
+		keyPos := InStr(dictName,key)
+		dictStr2 := SubStr(dictName,keyPos)
+		IfInString , dictStr2 , | 
+		{
+			endPos := InStr(dictStr2, "|")
+		}else{
+			endPos := StrLen(dictStr2)+1
+		}
+		startPos := StrLen(key)+2
+		returnValue := SubStr(dictStr2,startPos,(endPos-startPos))
+		return returnValue
+	}
+
+}

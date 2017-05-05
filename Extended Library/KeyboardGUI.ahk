@@ -311,8 +311,21 @@ keyboardMoveDown(){
 	Sleep, 60
 }
 
-keyboardEnter(override := ""){
-
+keyboardEnter(override := "", overrideLabel := ""){
+	if(override != ""){
+		Send {%override%}
+		if(overrideLabel == ""){
+			k_currentKey := override
+			ControlClick, %override%, ahk_id %k_ID%, , LEFT, 1
+		}
+		else{
+			k_currentKey := overrideLabel
+			ControlClick, %overrideLabel%, ahk_id %k_ID%, , LEFT, 1
+		}
+		Sleep, 50
+		return
+	}
+	
 	if(k_currentKey == "Caps Lock"){
 		capsLockOn := !capsLockOn
 	}
@@ -344,7 +357,6 @@ keyboardEnter(override := ""){
 		Send {Space}
 	}
 	else{
-		;MsgBox % controlPressed
 		if(capsLockOn == true){
 			keyToSend := k_currentKey
 		}
@@ -366,36 +378,10 @@ keyboardEnter(override := ""){
 		controlPressed := false
 		shiftPressed := false
 		altPressed := false
-		/*
-		if(shiftPressed == true){
-			MsgBox, Should not be here
-			if(controlPressed == true){
-				if(altPressed == true){
-					Send ^!+{%keyToSend%}
-				}
-				else{
-					Send ^+{%keyToSend%}
-				}
-			}
-			else{
-				Send +{%keyToSend%}
-			}
-		}
-		else{
-			if(controlPressed == true){
-				if(altPressed == true){
-					Send ^!{%keyToSend%}
-				}
-				else{
-					;MsgBox, It gets here
-					Send ^{%keyToSend%}
-				}
-			}
-			else{
-				Send %keyModifier%{%keyToSend%}
-			}
-		}
-		*/
+		Sleep, 50
 		
 	}
 }
+
+
+

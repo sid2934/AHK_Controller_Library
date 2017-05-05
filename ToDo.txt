@@ -7,7 +7,7 @@ Get the ButtonHandler function in ControllerCore.ahk functioning
 	remove those buttons from the string and call the correct function, then continue with the rest of the buttons
 
 Date 02:18 2/1/2017
-Make/Find a good Stack class to implement a double/triple click functionality. This my involve preventing the buttonHandler
+Make/Find a good Stack class to implement a double/holding click functionality. This my involve preventing the buttonHandler
 function from running if nothing is pressed. The cycle may be (and more than likely is) to fast to only look at the top 
 of the 	stack plus holding down a button may also trigger the multi clicks. Possible implements a way to see if a button
 has been released to prevent false triggers. This will more than likely take alot of work.

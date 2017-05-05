@@ -3,7 +3,7 @@
 #Include ControllerCore.ahk
 
 ;Creates a controller from the first joystick detected
-Controller := new Controller(,true,"D:/Users/austi/Desktop/AHK Git/AHK_Controller_Library/buttonConfig.csv", true, "D:/Users/austi/Desktop/AHK Git/AHK_Controller_Library/joystickConfig.csv")
+Controller := new Controller(,"D:/Users/austi/Desktop/AHK Git/AHK_Controller_Library/config.ini")
 ;Binds two axes to a single "Joystick"
 ;MsgBox % Controller.numberOfAxesoo
 Controller.createJoystick(1, 2, "Left", false, true)
@@ -17,16 +17,11 @@ Loop{
 }
 
 1_Event(param){
-	if(keyboardIsOpen==true){
-		keyboardEnter()
+	if(param == "long"){
+		Send {LButton Down}
 	}
 	else{
-		if(param == "long"){
-		Send {LButton Down}
-		}
-		else{
-			Send {LButton}
-		}
+		Send {LButton}
 	}
 }
 
@@ -37,7 +32,7 @@ Loop{
 		;-----Work Here-----
 		;make it possible to override the enter method and directly assign a key to a button
 		;
-		keyboardEnter(Backspace)
+		keyboardEnter("Backspace", "Bk")
 	}
 	else{
 		Send {RButton}
@@ -59,6 +54,11 @@ Loop{
 	if(param == "double" || param == "long"){
 		toggleKeyboard()
 	}
+	else{
+		if(keyboardIsOpen == true){
+			keyboardEnter()
+		}
+	}
 }
 
 Left_Stick_Event(state){
@@ -66,64 +66,47 @@ Left_Stick_Event(state){
 	lenght := state.Magnitude
 	radian  :=  deg*0.0174532925
 	MouseGetPos, mx, my
-	my2:= -(sin(radian)*lenght)/2
-	mx2:= (cos(radian)*lenght)/2
+	my2:= -(sin(radian)*lenght)/10
+	mx2:= (cos(radian)*lenght)/10
 	MouseMove, %mx2%, %my2%, 10, R
 }
 
 Right_Stick_Event(state){
 	deg := state.Angle
 	mag := state.Magnitude
-	if(keyboardIsOpen == true){
-		if(mag >= 35){
-			if(deg >= 45 && deg <= 135){
-				keyboardMoveUp()
-			}
-			else if(deg > 135 && deg < 225){
-				keyboardMoveLeft()
-			}
-			else if(deg >= 225 && deg <= 315){
-				keyboardMoveDown()
-			}
-			else{
-				keyboardMoveRight()
-			}
+	Send {Up up}{Down up}{Left up}{Right Up}
+	if(mag >= 10){
+		if(deg >= 45 && deg <= 135){
+			Send {Up down}
 		}
-	}
-	else {
-		if(mag >= 10){
-			if(deg >= 45 && deg <= 135){
-				Send {Up }
-			}
-			else if(deg > 135 && deg < 225){
-				Send {Left }
-			}
-			else if(deg >= 225 && deg <= 315){
-				Send {Down }
-			}
-			else{
-				Send {Right s}
-			}
+		else if(deg > 135 && deg < 225){
+			Send {Left down}
+		}
+		else if(deg >= 225 && deg <= 315){
+			Send {Down down}
+		}
+		else{
+			Send {Right down}
 		}
 	}
 }
 
 
-~Left::
-keyboardMoveLeft()
-return
+povLeft_Event(){
+	keyboardMoveLeft()
+}
 
-~Right::
-keyboardMoveRight()
-return
+povRight_Event(){
+	keyboardMoveRight()
+}
 
-~Up::
-keyboardMoveUp()
-return
+povUp_Event(){
+	keyboardMoveUp()
+}
 
-~Down::
-keyboardMoveDown()
-return
+povDown_Event(){
+	keyboardMoveDown()
+}
 
 log(msg){
 	FileAppend, %A_TickCount%`,%msg%`n, log.csv
