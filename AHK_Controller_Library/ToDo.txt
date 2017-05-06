@@ -1,0 +1,43 @@
+Things to get done/look into in order from next to last
+
+Completed
+Date Before the next one was.
+Get the ButtonHandler function in ControllerCore.ahk functioning
+	Needs to go through the Button Event Queue and see if all of the buttons for a event are pressed and if so
+	remove those buttons from the string and call the correct function, then continue with the rest of the buttons
+
+Date 02:18 2/1/2017
+Make/Find a good Stack class to implement a double/holding click functionality. This my involve preventing the buttonHandler
+function from running if nothing is pressed. The cycle may be (and more than likely is) to fast to only look at the top 
+of the 	stack plus holding down a button may also trigger the multi clicks. Possible implements a way to see if a button
+has been released to prevent false triggers. This will more than likely take alot of work.
+
+	In the same catagory add different types of press. press, double press, hold, and long hold
+
+To Do
+
+1) Design, Develop, and Implement a system to handel axes, joysticks, and POVs that is similar to the system used for buttons. That is the library handles all of the work and calls a user defined function for whichever events need to be called.
+	POV should be the easiest but I'm not sure how they work on controllers other than xbox controllers.
+		
+		Current thoughts are to handle this much like buttons so the user say what values they car about and what function to call when the trigger is hit
+
+	Axes and joysticks will be similar in approach just a scaling from 1D to 2D (maybe 3D? for when 3D joysticks get implemented??)
+	
+	Current thoughts for the implementation would be to take the buttonConfig.csv file and create a ini or csv (or hybrid) file that would give the user the ability to define the function that is called under certian situations 
+
+
+STOPING POINT OF THE NIGHT -- Working on the implementation of the joystickHandler() class. my need to change how the states are returned like I did for the buttons. Array returns seem to work much better than a formatted string (Go figure right...), so this implementation needs to change, but will make some debugging of the states more difficult. Sacrafice that needs to be made at this point.
+
+1.5) Develop a simple On-Screen Keyboard as a side task to get away from the heavy coding for a bit
+
+2) Remove Axes that are bound in a joystick pairing from the controllers axes array.
+
+3) Implement a controller profile that auto names and configures controllers based on the driver/controller type
+
+4) Optomize the Button Event Queue for better performance
+
+5) Optomize the buttonHandler() function
+
+6) Add documentation to the code added since last time
+
+7) More
