@@ -108,6 +108,13 @@ povDown_Event(){
 	keyboardMoveDown()
 }
 
+Trigger_Event(){
+	MsgBox, Yep
+}
+
+NTrigger_Event(){
+	MsgBox, Nope
+}
 log(msg){
 	FileAppend, %A_TickCount%`,%msg%`n, log.csv
 }

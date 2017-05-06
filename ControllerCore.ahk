@@ -345,7 +345,7 @@ class Controller{
 			else{
 				Loop, Parse, joystickConfigSection, `n
 				{
-					temp := new joystickTrigger(A_LoopField)
+					temp := new axes_joystickTrigger(A_LoopField)
 					this.joystickQueue.Enqueue(temp)
 				}
 			}
@@ -378,6 +378,18 @@ class Controller{
 		
 		if(axesEnable == true){
 			checkAxesImplementation := true
+			IniRead, axesConfigSection, %configPath%, Axes Config
+			if(axesConfigSection == ""){
+				MsgBox, Axes DISABLED `nNo axes config section was specified. Cannot use joysticks without a Axes Config Section
+				checkAxesImplementation := false
+			}
+			else{
+				Loop, Parse, axesConfigSection, `n
+				{
+					temp := new axes_joystickTrigger(A_LoopField)
+					this.axesQueue.Enqueue(temp)
+				}
+			}
 		}
 		else{
 			checkAxesImplementation := false
@@ -498,7 +510,14 @@ class Controller{
 		}
 		
 		if(a == true){
-			
+			axesEvents := this.axesQueue.Size
+			loop %axesEvents%{
+				currentQueue := this.axesQueue.queue[A_Index]
+				currentFunction := currentQueue.eventHandler
+				if(IsFunc(currentFunction) == false){
+					MsgBox % currentFunction "() Does not exist"
+				}
+			}
 		}
 	}
 	
@@ -536,22 +555,15 @@ class Controller{
 		}
 		counter := start
 		dif := (last + 1) - start
-		returnString := 
-		loop %dif%
-		{
+		
+		returnArray := Object()
+		
+		Loop %dif%{
 			currentValue := this.controllerAxes[counter].state
-			;This if statment is used to ignore any of the axes added to create a joystick
-			if(currentValue != ""){
-				if(returnString != null){
-					returnString = %returnString%,%currentValue%
-				}
-				else{
-					returnString = %currentValue%
-				}
-			}
+			returnArray.Push(currentValue)
 			counter++
 		}
-		return returnString
+		return returnArray
 		
 	}
 	
@@ -681,7 +693,18 @@ class Controller{
 	}
 	
 	axesHandler(axesState){
-		
+		nOfAxes := this.numberOfAxes
+		Loop %nOfAxes%
+		{
+			currentQueue :=this.axesQueue.queue[A_Index]
+			currentAxis :=  axesState[currentQueue.trigger]
+			currentDeadzone := currentQueue.deadzone
+			if(currentDeadzone <= currentAxis){
+				functionToCall := currentQueue.eventHandler
+				mag := currentAxis.state  - currentDeadzone
+				%functionToCall%(mag)
+			}
+		}
 	}
 	
 	
@@ -713,9 +736,6 @@ class Controller{
 	}
 }
 
-class axesTrigger{
-
-}
 
 class povTrigger{
 	povValue :=
@@ -741,7 +761,7 @@ class povTrigger{
 	
 }
 
-class joystickTrigger{
+class axes_joystickTrigger{
 	joystickNumber :=
 	deadzoneRadius :=
 	function :=
