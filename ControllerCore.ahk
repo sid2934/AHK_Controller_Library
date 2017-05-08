@@ -1,13 +1,31 @@
-;~ #NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
-;#Warn  ; Enable warnings to assist with detecting common errors. Commment out unless there is issues
-SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
-SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
-CoordMode, Mouse, Screen ;Sets the Coordinate Mode for all "Mouse" methods
+/*
+Author: Austin "sind2934" Gray
+Version 0.1.0
+License: GPL-3.0
+Repository: https://github.com/sid2934/AHK_Controller_Library.git
+*/
 
-#Include D:/Users/austi/Desktop/AHK Git/AHK_Controller_Library/Extended Library/KeyboardGUI.ahk
+/*
+The in code comments should do a fairly decent job at explaining how everything
+works. This code is FAR from optimal and is currently working as a proof of
+concept and a basis for future optimization.
 
-;This simply adds some readibility for my sake
-null :=
+If you discover any instances of the code breaking please fill a issue report on
+github this will allow me to get a wider testing range. If you would like to
+suggest a feature please also fill out an isue report and start the title with
+"Feature Suggestion:" this will help me see what should be implemented next.
+*/
+
+;Recommended for performance and compatibility with future AutoHotkey releases.
+#NoEnv
+;Enable warnings to assist with detecting common errors. Commment out unless there is issues
+;#Warn
+SendMode Input  ;Recommended for new scripts due to its superior speed and reliability.
+SetWorkingDir %A_ScriptDir%  ;Ensures a consistent starting directory.
+
+;This Include is to include the On-Screen Keyboard Library in the code
+#Include %A_ScriptDir%/Extended Library/KeyboardGUI.ahk
+
 
 ;These globals are intended to be used for array access for the Controller state
 global Buttons = 1
@@ -19,18 +37,19 @@ global Joysticks = 4
 ;This class is used to represent buttons on the controller
 ;</summary>
 class CButton{
-	
+
 	;The literal id that AHK can use to access the button
 	buttonId :=
 	;NOT IMPLEMENTED - The common name of the button i.e. 'x', 'y', 'triangle',etc
-	name := 
+	name :=
 	;The controller number that AHK can use for access
 	controllerNumber :=
 	;The number that AHK uses for access
 	buttonNumber :=
-	
+
 	;<summary
 	;This is a constructor for the button class
+	;The above parametes
 	;</summary>
 	;<param="cNumber">The controller number</param>
 	;<param="bNumber">The button number</param>
@@ -42,7 +61,7 @@ class CButton{
 		this.controllerNumber := cNumber
 		this.buttonNumber := bNumber
 	}
-	
+
 	;<summary
 	;returns the key state of the button (0 if not pressed - 1 if pressed)
 	;</summary>
@@ -66,7 +85,7 @@ class CAxes{
 	controllerNumber :=
 	;The offset needed to make the axes default position equal to zero.
 	offset :=
-	
+
 	;<summary
 	;This is a constructor for the button class
 	;</summary>
@@ -80,7 +99,7 @@ class CAxes{
 		this.controllerNumber := cNumber
 		this.offset := o
 	}
-	
+
 	;<summary
 	;returns the state of the axis (0-100)
 	;</summary>
@@ -95,7 +114,7 @@ class CAxes{
 ;This class is used to bid two axis together and make a joystick
 ;</summary>
 class CJoystick{
-	
+
 	;The axis object for the X axis of the joystick
 	axisX :=
 	;The axis id for the X axis of the joystick
@@ -110,14 +129,14 @@ class CJoystick{
 	controllerNumber :=
 	;This is used to invert the results of the X Axis
 	;Explanation:
-	;This has multiple uses, first it can be used to correct the readings of the joystick state.
-	;Second it can be used to implement a inverted axis in the end script. This was implemented
-	;here so that it could be used for the first reason. The xbox needs to have the Y Axis inverted
-	;for proper reading of angles.
+	;This has multiple uses, first it can be used to correct the readings of the 
+	;joystick state. Second it can be used to implement a inverted axis in the 
+	;end script. This was implemented here so that it could be used for the first
+	;reason. The xbox needs to have the Y Axis inverted for proper reading of angles.
 	invertX :=
 	;This is used to invert the results of the Y Axis
 	invertY :=
-	
+
 	;<summary
 	;This is a constructor for the joystick class
 	;</summary>
@@ -137,27 +156,32 @@ class CJoystick{
 		this.invertX := invX
 		this.invertY := invY
 	}
-	
+
 	;<summary
 	;This function is used to retun the current angle the joystick is making
 	;implement my not be the best its been a while since I used triganometry
 	;</summary>
 	angle(){
+		;if the x axis needs to be inverted invX is set to -1 as a modifier
 		if(this.invertX == true){
 			invX := -1
 		}
 		else{
 			invX := 1
 		}
+		;same as above statment for the y axis
 		if(this.invertY == true){
 			invY := -1
 		}
 		else{
 			invY := 1
 		}
-		xCoord := this.axisX.state * invX 
+		;This is where the inversion happens by multiplying the  m
+		xCoord := this.axisX.state * invX
 		yCoord := this.axisY.state * invY
-		;MsgBox % "X: " xCoord ", Y: " yCoord
+		;This next if statment is used to determine what Cartesian Quadrants the
+		;point created by the joystick state is in.
+		;https://en.wikipedia.org/wiki/Quadrant_(plane_geometry)
 		if(xCoord > 0){
 			if(yCoord > 0){
 				quadrant := "firstQuadrant"
@@ -184,6 +208,7 @@ class CJoystick{
 				return 180
 			}
 		}
+		;This else handles the literal edge cases where xCoord == 0
 		else{
 			if(yCoord > 0){
 				return 90
@@ -191,33 +216,35 @@ class CJoystick{
 			else if(yCoord < 0){
 				return 270
 			}
-			else{
-				return 0
-			}
 		}
+		;This function generates a positive angle from 0 - 359 that is equal to
+		;the angle of the joystick in relation to the origin of the controller
+		;atan functions as tan^-1
 		return Abs(Abs(Atan(yCoord/xCoord) * (180/3.1415)) + quadModifier)
 	}
-	
+
 	;<summary
 	;This function is used to retun the current magnitude the joystick is making
-	;Thi simply returns the distance from the (0,0) 
+	;Thi simply returns the distance from the (0,0)
 	;</summary>
 	magnitude(){
 		xCoord := this.axisX.state
 		yCoord := this.axisY.state
-		
+		;This is simply the distance equation in 2D
+		;http://www.purplemath.com/modules/distform.htm
 		return sqrt((xCoord)**2 +  (yCoord)**2)
 	}
-	
+
 	;<summary
-	;returns a string with angle and magnitude. i.e. "[91.25,42.26]"
+	;returns a AHK associative array with "Angle" and "Magnitude" as keys
+	;https://autohotkey.com/docs/Objects.htm#Usage_Associative_Arrays
 	;</summary>
 	state{
 		get{
 			return {"Angle": this.angle() , "Magnitude": this.magnitude()}
 		}
 	}
-	
+
 }
 
 ;<summary
@@ -226,7 +253,9 @@ class CJoystick{
 ;</summary>
 class CPov{
 
+	;This literal ID that the script calls to access the control
 	povID :=
+	;The common name of the pov i.e. D-Pad
 	name :=
 	controllerNumber :=
 
@@ -241,11 +270,10 @@ class CPov{
 		this.name := n
 		this.controllerNumber := cNumber
 	}
-	
+
 	;<summary
 	;Returns the state of the POV control
 	;</summary>
-			
 	state{
 		get{
 			return GetKeyState(this.povId)
@@ -258,19 +286,19 @@ class CPov{
 ;This is where most of the "magic" happens
 ;</summary>
 class Controller{
-	
+
 	;The number of the controller (different for each instance)
 	controllerNumber :=
 	;The name of the controller is determined when the constructor is called
 	;This is usually the name of the driver used by the controller
 	controllerName :=
-	;This is the number of buttons the controller has 
+	;This is the number of buttons the controller has
 	;i.e. The xbox 360 controller has 10
 	numberOfButtons :=
 	;This is the number of axis the controller has
 	;i.e. The xbox 360 controller has 5 - 2 for each joystick and the triggers are seen as an axis
 	numberOfAxes := 0
-	;This is the number of joysricks the controller has
+	;This is the number of joysticks the controller has
 	;unlike the others this is NOT determined by default and just be done manually for now
 	;I am looking into making a doc with common controllers and having the class look at the
 	;doc for the controller and making the joysticks automatically
@@ -300,33 +328,46 @@ class Controller{
 	previousControllerState :=
 	;This is the current method for handling the joystick event calls
 	joystickQueue := new Queue()
-	;This queue is used to  store the pov action that are defined in the config.ini file under the "POV Config" Section 
+	;This queue is used to  store the pov action that are defined in the config.ini file under the "POV Config" Section
 	povDict := new Dictionary()
-	;This queue is used to  store the axes action that are defined in the config.ini file under the "Axes Config" Section 
+	;This queue is used to  store the axes action that are defined in the config.ini file under the "Axes Config" Section
 	;Any Axes that has been added to a joystick will be ignored in this section
 	axesQueue := new Queue()
-	
+
 	;<summary
 	;This is a constructor for the controller class
 	;</summary>
 	;<param="joystickNumber">The number of joystick for make a controller object for. Leave blank if not sure and will auto-detect the first controller</param>
-	__New(joystickNumber := 0, configPath := ""){
+	__New(configPath := "", joystickNumber := 0){
+	
+		;The IniRead(s) here are to determine if each set of the controller
+		;Is enabled. If not enabled the sub config sections will not be read for 
+		;that control.
+		;https://autohotkey.com/docs/commands/IniRead.htm
 		IniRead, buttonEnabled, %configPath%, General, Buttons_Enable
 		IniRead, joystickEnabled, %configPath%, General, Joysticks_Enable
 		IniRead, povEnabled, %configPath%, General, Pov_Enabled
 		IniRead, axesEnable, %configPath%, General, Axes_Enabled
-		
+
+		;The section to read in the button sub config section if buttons are enabled
 		if(buttonEnabled == true ){
+			;ToDo - get rid of the redundant boolean and just use buttonEnabled, etc
 			checkButtonsImplementation := true
+			;Reads the "Button Config" sub config in the config.ini file
 			IniRead, buttonConfigSection, %configPath%, Button Config
+			;If the section is empty of not found then the IniRead will set
+			;buttonConfigSection to ""
 			if(buttonConfigSection == ""){
 			MsgBox, BUTTONS DISABLED `nNo button config file was specified. Cannot use buttons without a Button Config Section
 			checkButtonsImplementation := false
 			}
 			else{
-				
+				;Loops through one line of the section at a time
 				Loop, Parse, buttonConfigSection, "`n"
 				{
+					;A_LoopField is a built in variable and is set each iteration
+					;of the loop with the contents of the next line
+					;controllerButtonQueue.AddCombo in the function itself
 					this.controllerButtonQueue.AddCombo(A_LoopField)
 				}
 			}
@@ -334,18 +375,26 @@ class Controller{
 		else{
 			checkButtonsImplementation := false
 		}
-		
+
+		;The section to read in the joystick sub config section if joystick are enabled
 		if(joystickEnabled == true ){
+			;ToDo - get rid of the redundant boolean and just use joystickEnabled, etc
 			checkJoystickImplementation := true
+			;Reads the "Joystick Config" sub config in the config.ini file
 			IniRead, joystickConfigSection, %configPath%, Joystick Config
+			;If the section is empty of not found then the IniRead will set
+			;joystickConfigSection to ""
 			if(joystickConfigSection == ""){
 			MsgBox, Joysticks DISABLED `nNo joystick config section was specified. Cannot use joysticks without a Joystick Config Section
 			checkJoystickImplementation := false
 			}
 			else{
+				;Loops through each line of the joystickConfigSection section
 				Loop, Parse, joystickConfigSection, `n
 				{
-					temp := new axes_joystickTrigger(A_LoopField)
+					;This adds a new joystick to the joystick queue
+					;More documentation is in "class joystickConfigSection()"
+					temp := new joystickConfigSection(A_LoopField)
 					this.joystickQueue.Enqueue(temp)
 				}
 			}
@@ -353,21 +402,35 @@ class Controller{
 		else{
 			checkJoystickImplementation := false
 		}
-		
+
+		;The section to read in the pov sub config section if pov are enabled
 		if(povEnabled == true){
+			;ToDo - get rid of the redundant boolean and just use povEnabled, etc
 			checkPovImplementation := true
+			;Reads the "POV Config" sub config in the config.ini file
 			IniRead, povConfigSection, %configPath%, POV Config
+			;If the section is empty of not found then the IniRead will set
+			;povConfigSection to ""
 			if(povConfigSection == ""){
 				MsgBox, POV DISABLED `nNo pov config section was specified. Cannot use joysticks without a POV Config Section
 				checkPovImplementation := false
 			}
 			else{
+				;This loops through each line of the povConfigSection
 				Loop, Parse, povConfigSection, `n
 				{
+					;This allows the StringSplit Function to be 
 					loopString = %A_LoopField%
+					;This built in function splits the loopString string into
+					;a sudo array called output using a comma as the delimeter
+					;https://autohotkey.com/docs/commands/StringSplit.htm
 					StringSplit, output, loopString, "`,"
 					value := output1
 					function := output2
+					;This adds the value and function to the povDict.
+					;povDict is an instance of the partial Dictionary class
+					;that I created because the AHK associative arrays were not
+					;working as I liked
 					this.povDict.Add(value,function)
 				}
 			}
@@ -375,17 +438,26 @@ class Controller{
 		else{
 			checkPovImplementation := false
 		}
-		
+
+		;The section to read in the axes sub config section if axes are enabled
 		if(axesEnable == true){
+			;ToDo - get rid of the redundant boolean and just use axesEnable, etc
 			checkAxesImplementation := true
+			;Reads the "Axes Config" sub config in the config.ini file
 			IniRead, axesConfigSection, %configPath%, Axes Config
+			;If the section is empty of not found then the IniRead will set
+			;axesConfigSection to ""
 			if(axesConfigSection == ""){
 				MsgBox, Axes DISABLED `nNo axes config section was specified. Cannot use joysticks without a Axes Config Section
 				checkAxesImplementation := false
 			}
 			else{
+				;Loops through each of the lines in the axesConfigSection section
 				Loop, Parse, axesConfigSection, `n
 				{
+					;This Enqueues a new axes_joystickTrigger into axesQueue
+					;More documentation for Enqueue is in the "class" Queue 
+					;found below
 					temp := new axes_joystickTrigger(A_LoopField)
 					this.axesQueue.Enqueue(temp)
 				}
@@ -394,16 +466,21 @@ class Controller{
 		else{
 			checkAxesImplementation := false
 		}
-		
-		this.implementationCheck(checkButtonsImplementation, checkJoystickImplementation, checkPovImplementation, checkAxesImplementation)
-		
-		;find the joystick if not set
+
+		;This calls the implementationCheck function with the params to ensure
+		;that all functions specified in the config.ini file are implemented in
+		;the code.
+		implementationCheck(checkButtonsImplementation, checkJoystickImplementation, checkPovImplementation, checkAxesImplementation)
+
+		;Finds the joystick if not specified as a parameter
+		;This code below is modified from the Joy Test.ahk file provided here
+		;https://autohotkey.com/docs/scripts/JoystickTest.htm
 		if(joystickNumber <= 0){
 			Loop 16  ; Query each joystick number to find out which ones exist.
 			{
 				GetKeyState, JoyName, %A_Index%JoyName
 				this.controllerName := JoyName
-				if (JoyName <> null)
+				if (JoyName <> )
 				{
 					this.controllerNumber :=  A_Index
 					break
@@ -421,17 +498,25 @@ class Controller{
 				GetKeyState, outVar, %JoystickNumber%JoyName
 				this.controllerName := outVar
 				GetKeyState, joy_info, %JoystickNumber%JoyInfo
-				
+
 				nButtons := this.numberOfButtons
 				;Loop for each button to make a button object and add it to controllerButtons
 				Loop %nButtons%
 				{
+					;This adds a new button object to the controllerButtons Array
+					;for every button the controller has
+					;ToDo - Implement the button name so that either the user or
+					;a list of common controllers can populate that field
 					newButton := new CButton(this.controllerNumber, A_Index, "NeedsAdded")
 					this.controllerButtons.Push(newButton)
 				}
-				
-				
+
+
 				;Axes and POV's
+				;This section simply adds the axes/pov control to its respective
+				;field if it exists. For a more clear look at the method used
+				;open the Joy Test.ahk file
+				;https://autohotkey.com/docs/scripts/JoystickTest.htm
 				GetKeyState, joy_info, %JoystickNumber%JoyInfo
 				GetKeyState, joy_axes, %JoystickNumber%JoyAxes
 				this.numberOfAxes := joy_axes
@@ -442,7 +527,7 @@ class Controller{
 				GetKeyState, tempOffset, %cNumber%JoyY
 				newAxis := new CAxes(this.conxtrollerNumber, "Y", (0 - tempOffset), "Y")
 				this.controllerAxes.Push(newAxis)
-				
+
 				IfInString, joy_info, Z
 				{
 					GetKeyState, tempOffset, %cNumber%JoyZ
@@ -475,8 +560,8 @@ class Controller{
 			}
 		}
 	}
-	
-	
+
+
 	implementationCheck(b, j, p, a){
 		if(b == true){
 				buttonEvents := this.controllerButtonQueue.queue.Size
@@ -498,7 +583,7 @@ class Controller{
 				}
 			}
 		}
-		
+
 		if(p == true){
 			numberOfPovEvents := this.povDict.Size
 			Loop %numberOfPovEvents%{
@@ -508,7 +593,7 @@ class Controller{
 				}
 			}
 		}
-		
+
 		if(a == true){
 			axesEvents := this.axesQueue.Size
 			loop %axesEvents%{
@@ -520,8 +605,8 @@ class Controller{
 			}
 		}
 	}
-	
-	
+
+
 	;<summary
 	;Returns a comma seperated string of the buttons that are pressed in the given range
 	;Leave params blank to get all buttons
@@ -534,15 +619,15 @@ class Controller{
 		}
 		counter := start
 		dif := (last + 1) - start
-		returnObject := Object() 
+		returnObject := Object()
 		loop %dif%
 		{
-			returnObject[counter] := this.controllerButtons[counter].state 
+			returnObject[counter] := this.controllerButtons[counter].state
 			counter++
 		}
 		return returnObject
 	}
-	
+
 	;<summary
 	;Returns a comma seperated string of the state of the axis in the given range
 	;Leave params blank to get all buttons
@@ -555,25 +640,25 @@ class Controller{
 		}
 		counter := start
 		dif := (last + 1) - start
-		
+
 		returnArray := Object()
-		
+
 		Loop %dif%{
 			currentValue := this.controllerAxes[counter].state
 			returnArray.Push(currentValue)
 			counter++
 		}
 		return returnArray
-		
+
 	}
-	
+
 	;<summary
 	;Returns the state of the controller POV
 	;</summary>
 	povState(){
 		return this.controllerPov.state
 	}
-	
+
 	;<summary
 	;Returns a comma seperated string of the state of the sticks in the given range
 	;Leave params blank to get all buttons
@@ -586,9 +671,9 @@ class Controller{
 		}
 		counter := start
 		dif := (last + 1) - start
-		
+
 		returnArray := Object()
-		
+
 		Loop %dif%{
 			currentValue := this.controllerJoysticks[counter].state
 			returnArray.Push(currentValue)
@@ -596,7 +681,7 @@ class Controller{
 		}
 		return returnArray
 	}
-	
+
 	;<summary
 	;This function is called to create a joystick given a list of params
 	;This is currently in testing and should remove the axes from the axes array that are added into the joystick array
@@ -613,7 +698,7 @@ class Controller{
 		this.controllerAxes[axY] := "ignore"
 		this.controllerJoysticks.Push(newJoy)
 	}
-	
+
 	;<summary
 	;Returns a csv styke result of the state of all the control types. Buttons, Axes, POV, Joystick
 	;</summary>
@@ -627,7 +712,7 @@ class Controller{
 			return returnArray
 		}
 	}
-	
+
 	update{
 		get{
 			currentState := this.state
@@ -636,10 +721,10 @@ class Controller{
 			this.povHandler(currentState[POV])
 			this.joystickHandler(currentState[Joysticks])
 			this.previousState := currentState
-			
+
 		}
 	}
-	
+
 	;<summary
 	;This method is called when the controller is updated. It handles the button states
 	;This method calls the user defined functions that are given and stored in the controllerButtonQueue object.
@@ -653,7 +738,7 @@ class Controller{
 			currentCheckKeys := currentQueue.trigger
 			StringSplit, currentCheckKeys, currentCheckKeys, /
 			currentNumberOfKeys := currentQueue.numberOfKeys
-			
+
 			loop %currentNumberOfKeys%{
 				if(pressedButtons[currentCheckKeys%A_Index%] == false){
 					buttonsMatch := false
@@ -689,9 +774,9 @@ class Controller{
 				currentQueue.lastCycleState := false
 			}
 		}
-		
+
 	}
-	
+
 	axesHandler(axesState){
 		nOfAxes := this.numberOfAxes
 		Loop %nOfAxes%
@@ -706,18 +791,18 @@ class Controller{
 			}
 		}
 	}
-	
-	
+
+
 	povHandler(povState){
 		if(povState != -1){
-			
+
 			functionToCall := this.povDict.valueOf(povState)
 			if(functionToCall != ""){
 				%functionToCall%()
 			}
 		}
 	}
-	
+
 	;In development
 	joystickHandler(joystickState){
 		numberOfJoy := this.numberOfJoysticks
@@ -737,54 +822,43 @@ class Controller{
 }
 
 
-class povTrigger{
-	povValue :=
-	function :=
-	
-	__New(csvLine){
-		StringSplit, output, csvLine, "`,"
-		this.povValue := output1
-		this.function := output2
-	}
-	
-	trigger{
-		get{
-			return this.povValue
-		}
-	}
-	
-	eventHandler{
-		get{
-			return this.function
-		}
-	}
-	
-}
+/*
+all of the classes below this are used in aiding or implementing the controller
+class. Some are ahk implementations of common data structures, others are partial
+implementations of custom structures ot make code (arguably) easier to read/write
+*/
 
+;<summary>
+;This class is used to generate event triggers for the axes and joystick controls
+;</summary>
 class axes_joystickTrigger{
 	joystickNumber :=
 	deadzoneRadius :=
 	function :=
 	
+	;<summary>
+	;
+	;</summary>
+	;<param=""></param>
 	__New(csvLine){
 		StringSplit, output, csvLine, "`,"
 		this.joystickNumber := output1
 		this.deadzoneRadius := output2
 		this.function := output3
 	}
-	
+
 	trigger{
 		get{
 			return this.joystickNumber
 		}
 	}
-	
+
 	deadzone{
 		get{
 			return this.deadzoneRadius
 		}
 	}
-	
+
 	eventHandler{
 		get{
 			return this.function
@@ -796,11 +870,11 @@ class buttonTrigger{
 	keys :=
 	numberKeys :=
 	function :=
-	pressedLastCycle := 
+	pressedLastCycle :=
 	timerRunning :=
 	clickModifyTimer :=
 	releasedOnTimer :=
-	
+
 	__New(k, f){
 		this.keys := k
 		;gets the number of times a char occurs in a string
@@ -812,31 +886,31 @@ class buttonTrigger{
 		this.clickModifyTimer := ObjBindMethod(this, "StopTimer")
 		this.releasedOnTimer := false
 	}
-	
+
 	trigger{
 		get{
 			return this.keys
 		}
 	}
-	
+
 	released{
 		set{
 			return this.releasedOnTimer := value
 		}
 	}
-	
+
 	numberOfKeys{
 		get{
 			return this.numberKeys
 		}
 	}
-	
+
 	eventHandler{
 		get{
 			return this.function
 		}
 	}
-	
+
 	lastCycleState{
 		get{
 			return this.pressedLastCycle
@@ -845,14 +919,14 @@ class buttonTrigger{
 			return this.pressedLastCycle := value
 		}
 	}
-	
+
 	timerStatus{
 		get{
 			return this.timerRunning
 		}
 	}
-	
-	
+
+
 	StartTimer(){
 		;MsgBox, Timer Start
 		this.timerRunning := true
@@ -860,7 +934,7 @@ class buttonTrigger{
 		temp := this.clickModifyTimer
 		SetTimer, %temp% , -300
 	}
-	
+
 	StopTimer(){
 		functionToCall := this.eventHandler
 		if(this.releasedOnTimer == false){
@@ -874,7 +948,7 @@ class buttonTrigger{
 		temp := this.clickModifyTimer
 		SetTimer, % temp, Off
 	}
-	
+
 	;This is used to kill the timer if another event i.e. double or long press triggers it
 	KillTimer(){
 		this.releasedOnTimer := false
@@ -882,7 +956,7 @@ class buttonTrigger{
 		temp := this.clickModifyTimer
 		SetTimer, % temp, Off
 	}
-	
+
 }
 
 class ButtonQueue{
@@ -890,7 +964,7 @@ class ButtonQueue{
 	__New(){
 		this.queue := new Queue()
 	}
-	
+
 	AddCombo(csvLine){
 		StringSplit, output, csvLine, "`,"
 		newTrigger := new buttonTrigger(output1, output2)
@@ -912,35 +986,35 @@ class ButtonQueue{
 			}
 		}
 	}
-	
+
 }
 
 class Queue{
 
 	queue := Object()
 	count := 0
-	
+
 	__New{
-		
+
 	}
-	
+
 	Enqueue(data){
 		this.count++
 		this.queue.InsertAt(this.count, data)
 	}
-	
+
 	Insert(data, location){
 		this.count++
 		this.queue.InsertAt(location, data)
 	}
-	
+
 	Swap(locationA, locationB){
 		dataOfA := this.queue(locationA)
 		dataOfB := this.queue(locationB)
 		this.queue[locationA] := dataOfB
 		this.queue[locationB] := dataOfA
 	}
-	
+
 	Dequeue(){
 		if(this.count > 0){
 			this.count--
@@ -949,7 +1023,7 @@ class Queue{
 			return returnValue
 		}
 		else{
-			return null
+			return
 		}
 	}
 
@@ -958,7 +1032,7 @@ class Queue{
 			return (0 == this.count)
 		}
 	}
-	
+
 	Size{
 		get{
 			return this.count
@@ -982,7 +1056,7 @@ class Dictionary{
 			MsgBox % startingContents
 			this.contents :=startingContents
 			StringReplace, startingContents, startingContents, |,, UseErrorLevel
-			this.size := ErrorLevel 
+			this.size := ErrorLevel
 		}
 	}
 
@@ -994,11 +1068,11 @@ class Dictionary{
 		this.size++
 		this.keys.Push(key)
 	}
-	
+
 	Remove(){
 		MsgBox, Needs to be added
 	}
-	
+
 	Size{
 		get{
 			return this.size
@@ -1008,13 +1082,13 @@ class Dictionary{
 	getKeyFromInt(int){
 		return this.keys[int]
 	}
-	
-	
+
+
 	valueOf(key) {
 		dictName := this.contents
 		keyPos := InStr(dictName,key)
 		dictStr2 := SubStr(dictName,keyPos)
-		IfInString , dictStr2 , | 
+		IfInString , dictStr2 , |
 		{
 			endPos := InStr(dictStr2, "|")
 		}else{

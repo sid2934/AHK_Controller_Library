@@ -3,7 +3,7 @@
 #Include ControllerCore.ahk
 
 ;Creates a controller from the first joystick detected
-Controller := new Controller(,"D:/Users/austi/Desktop/AHK Git/AHK_Controller_Library/config.ini")
+Controller := new Controller("D:/Users/austi/Desktop/AHK Git/AHK_Controller_Library/config.ini")
 ;Binds two axes to a single "Joystick"
 ;MsgBox % Controller.numberOfAxesoo
 Controller.createJoystick(1, 2, "Left", false, true)
