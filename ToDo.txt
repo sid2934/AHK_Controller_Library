@@ -1,14 +1,16 @@
 
 ToDo
 
-1) Implement a controller profile that auto names and configures controllers based on the driver/controller type
+1) Make the config.ini generate the joysticks automatically on launch
 
-2) Come up with a way to optionally include the exended library (maybe just move the includes into the users ahk script)
+2) Implement a controller profile that auto names and configures controllers based on the driver/controller type
 
-3) Optomize the Button Event Queue for better performance
+3) Come up with a way to optionally include the exended library (maybe just move the includes into the users ahk script)
 
-4) Optomize the buttonHandler() function
+4) Optomize the Button Event Queue for better performance
 
-5) Add documentation to the code added since last time
+5) Optomize the buttonHandler() function
 
-6) More
+6) Add documentation to the code added since last time
+
+7) More
