@@ -1,6 +1,6 @@
 #SingleInstance
 
-#Include ControllerCore.ahk
+#Include %A_ScriptDir%/ControllerCore.ahk
 
 ;Creates a controller from the first joystick detected
 Controller := new Controller("D:/Users/austi/Desktop/AHK Git/AHK_Controller_Library/config.ini")
@@ -40,6 +40,7 @@ Loop{
 }
 
 3_Event(){
+	MsgBox, Hello Tarra
 }
 
 4_Event(){

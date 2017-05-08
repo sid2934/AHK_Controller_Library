@@ -1,4 +1,5 @@
 /*
+File: ControllerCore.ahk
 Author: Austin "sind2934" Gray
 Version 0.1.0
 License: GPL-3.0
@@ -470,7 +471,7 @@ class Controller{
 		;This calls the implementationCheck function with the params to ensure
 		;that all functions specified in the config.ini file are implemented in
 		;the code.
-		implementationCheck(checkButtonsImplementation, checkJoystickImplementation, checkPovImplementation, checkAxesImplementation)
+		this.implementationCheck(checkButtonsImplementation, checkJoystickImplementation, checkPovImplementation, checkAxesImplementation)
 
 		;Finds the joystick if not specified as a parameter
 		;This code below is modified from the Joy Test.ahk file provided here
