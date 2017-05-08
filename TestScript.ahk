@@ -27,11 +27,6 @@ Loop{
 
 2_Event(){
 	if(keyboardIsOpen==true){
-		;
-		;
-		;-----Work Here-----
-		;make it possible to override the enter method and directly assign a key to a button
-		;
 		keyboardEnter("Backspace", "Bk")
 	}
 	else{

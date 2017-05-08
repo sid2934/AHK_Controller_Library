@@ -27,8 +27,7 @@ SetWorkingDir %A_ScriptDir%  ;Ensures a consistent starting directory.
 ;This Include is to include the On-Screen Keyboard Library in the code
 #Include %A_ScriptDir%/Extended Library/KeyboardGUI.ahk
 
-;Apperently this is needed for some vodoo blackmagic shit
-null := 
+
 
 ;These globals are intended to be used for array access for the Controller state
 global Buttons = 1
@@ -483,7 +482,7 @@ class Controller{
 			{
 				GetKeyState, JoyName, %A_Index%JoyName
 				this.controllerName := JoyName
-				if (JoyName <> null)
+				if JoyName <>
 				{
 					this.controllerNumber :=  A_Index
 					break
@@ -1026,7 +1025,7 @@ class Queue{
 			return returnValue
 		}
 		else{
-			return null
+			return
 		}
 	}
 
