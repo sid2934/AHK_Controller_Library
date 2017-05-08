@@ -27,6 +27,8 @@ SetWorkingDir %A_ScriptDir%  ;Ensures a consistent starting directory.
 ;This Include is to include the On-Screen Keyboard Library in the code
 #Include %A_ScriptDir%/Extended Library/KeyboardGUI.ahk
 
+;Apperently this is needed for some vodoo blackmagic shit
+null := 
 
 ;These globals are intended to be used for array access for the Controller state
 global Buttons = 1
@@ -395,7 +397,7 @@ class Controller{
 				{
 					;This adds a new joystick to the joystick queue
 					;More documentation is in "class joystickConfigSection()"
-					temp := new joystickConfigSection(A_LoopField)
+					temp := new axes_joystickTrigger(A_LoopField)
 					this.joystickQueue.Enqueue(temp)
 				}
 			}
@@ -481,7 +483,7 @@ class Controller{
 			{
 				GetKeyState, JoyName, %A_Index%JoyName
 				this.controllerName := JoyName
-				if (JoyName <> )
+				if (JoyName <> null)
 				{
 					this.controllerNumber :=  A_Index
 					break
@@ -1024,7 +1026,7 @@ class Queue{
 			return returnValue
 		}
 		else{
-			return
+			return null
 		}
 	}
 
