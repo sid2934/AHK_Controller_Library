@@ -3,10 +3,12 @@ ToDo
 
 1) Implement a controller profile that auto names and configures controllers based on the driver/controller type
 
-2) Optomize the Button Event Queue for better performance
+2) Come up with a way to optionally include the exended library (maybe just move the includes into the users ahk script)
 
-3) Optomize the buttonHandler() function
+3) Optomize the Button Event Queue for better performance
 
-4) Add documentation to the code added since last time
+4) Optomize the buttonHandler() function
 
-5) More
+5) Add documentation to the code added since last time
+
+6) More
