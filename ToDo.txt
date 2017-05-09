@@ -3,6 +3,8 @@ ToDo
 
 1) Make the config.ini generate the joysticks automatically on launch
 
+2) Make the keyboard appear on the screen the cursor is on
+
 2) Implement a controller profile that auto names and configures controllers based on the driver/controller type
 
 3) Come up with a way to optionally include the exended library (maybe just move the includes into the users ahk script)

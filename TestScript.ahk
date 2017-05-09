@@ -89,28 +89,44 @@ Right_Stick_Event(state){
 
 
 povLeft_Event(){
-	keyboardMoveLeft()
+	if(keyboardIsOpen == true){
+		keyboardMoveLeft()
+	}
+	else{
+		Send {f1}
+	}
 }
 
 povRight_Event(){
-	keyboardMoveRight()
+	if(keyboardIsOpen == true){
+		keyboardMoveRight()
+	}
+	else{
+		Send {f2}
+	}
 }
 
 povUp_Event(){
-	keyboardMoveUp()
+	if(keyboardIsOpen == true){
+		keyboardMoveUp()
+	}
+	else{
+		Send {esc}
+	}
 }
 
 povDown_Event(){
-	keyboardMoveDown()
+	if(keyboardIsOpen == true){
+		keyboardMoveDown()
+	}
+	else{
+		Send {f3}
+	}
 }
 
 Trigger_Event(){
-	MsgBox, Yep
 }
 
-NTrigger_Event(){
-	MsgBox, Nope
-}
 log(msg){
 	FileAppend, %A_TickCount%`,%msg%`n, log.csv
 }

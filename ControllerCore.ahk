@@ -1,4 +1,5 @@
 /*
+AHK Version: 1.1.24.00
 File: ControllerCore.ahk
 Author: Austin "sind2934" Gray
 Version 0.1.0
