@@ -25,7 +25,7 @@ suggest a feature please also fill out an isue report and start the title with
 SendMode Input  ;Recommended for new scripts due to its superior speed and reliability.
 
 ;This Include is to include the On-Screen Keyboard Library in the code
-#Include %A_ScriptDir%\AHK_Controller_Library\Extended Library/KeyboardGUI.ahk
+#Include %A_ScriptDir%\Extended Library\KeyboardGUI.ahk
 
 
 ;These globals are intended to be used for array access for the Controller state
