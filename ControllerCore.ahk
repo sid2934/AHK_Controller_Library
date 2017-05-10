@@ -1,7 +1,7 @@
 /*
 AHK Version: 1.1.24.00
 File: ControllerCore.ahk
-Author: Austin "sind2934" Gray
+Author: Austin "sid2934" Gray
 Version 0.1.0
 License: GPL-3.0
 Repository: https://github.com/sid2934/AHK_Controller_Library.git
@@ -23,11 +23,9 @@ suggest a feature please also fill out an isue report and start the title with
 ;Enable warnings to assist with detecting common errors. Commment out unless there is issues
 ;#Warn
 SendMode Input  ;Recommended for new scripts due to its superior speed and reliability.
-SetWorkingDir %A_ScriptDir%  ;Ensures a consistent starting directory.
 
 ;This Include is to include the On-Screen Keyboard Library in the code
-#Include %A_ScriptDir%/Extended Library/KeyboardGUI.ahk
-
+#Include %A_ScriptDir%\AHK_Controller_Library\Extended Library/KeyboardGUI.ahk
 
 
 ;These globals are intended to be used for array access for the Controller state
@@ -598,7 +596,7 @@ class Controller{
 		if(p == true){
 			numberOfPovEvents := this.povDict.Size
 			Loop %numberOfPovEvents%{
-				currentFunction := this.povDict.valueOf(this.povDict.getKeyFromInt(A_Index))
+				currentFunction := this.povDict.TryGetValue(this.povDict.getKeyFromInt(A_Index))
 				if(IsFunc(currentFunction) == false){
 					MsgBox % currentFunction "() Does not exist"
 				}
@@ -819,7 +817,7 @@ class Controller{
 	povHandler(povState){
 		if(povState != -1){
 
-			functionToCall := this.povDict.valueOf(povState)
+			functionToCall := this.povDict.TryGetValue(povState)
 			if(functionToCall != ""){
 				%functionToCall%()
 			}
@@ -1173,12 +1171,14 @@ class Queue{
 
 }
 
+
 ;<summary>
 ;This may be called a dictionary but it is a travisty to all mankind to be honest
 ;This is used to create a easy to use Key Value Pair system
 ;Credit to Cruncher1 for the original take on this.
 ;https://autohotkey.com/board/topic/91732-an-easy-way-to-create-a-dictionary-or-associative-array-in-ahk/
 ;The contents are stored in a structured string i.e. "Key1:Value1|Key2:Value2"
+;This attempt is supposed to have the same functionality as the .NET Dictionary object
 ;</summary>
 class Dictionary{
 
@@ -1193,6 +1193,8 @@ class Dictionary{
 			this.size := 0
 			;An array of all the keys. Allows the Values to be accessed from a loop
 			this.keys := Object()
+			;An array of all the values. Allows the Values to be accessed from a loop
+			this.values := Object()
 		}
 		else{
 			;All of this needs to be added
@@ -1205,6 +1207,8 @@ class Dictionary{
 		}
 	}
 
+	;===================== Methods ===============================
+	
 	;<summary>
 	;This is how key value pairs get added to the dictionary
 	;</summary>
@@ -1217,8 +1221,25 @@ class Dictionary{
 		x := this.contents
 		this.size++
 		this.keys.Push(key)
+		this.values.Push(value)
 	}
-
+	
+	Clear(){
+		this.contents := ""
+	}
+	
+	ContainsKey(TKey){
+	
+	}
+	
+	ContainsValue(TValue){
+	
+	}
+	
+	Equals(Dictionary){
+	
+	}
+	
 	;<summary>
 	;When implemented will remove a key value pair from the contents
 	;</summary>
@@ -1226,27 +1247,12 @@ class Dictionary{
 		;ToDo - This
 		MsgBox, Needs to be added
 	}
-
-	;This property returns the current size of the dictionary
-	Size{
-		get{
-			return this.size
-		}
-	}
-
-	;<summary>
-	;This function returns one of the Keys based on the int provided
-	;</summary>
-	;<param="int">the number of the wanted Key</param>
-	getKeyFromInt(int){
-		return this.keys[int]
-	}
-
+	
 	;<summary>
 	;This function returns the Value associated with a given key 
 	;</summary>
 	;<param="key">The Key to the desited </param>
-	valueOf(key) {
+	TryGetValue(key) {
 		dictName := this.contents
 		keyPos := InStr(dictName,key)
 		dictStr2 := SubStr(dictName,keyPos)
@@ -1260,5 +1266,56 @@ class Dictionary{
 		returnValue := SubStr(dictStr2,startPos,(endPos-startPos))
 		return returnValue
 	}
-
+	
+	ToString(delim := " "){
+	
+	}
+	
+	;<summary>
+	;This function returns one of the Keys based on the int provided
+	;</summary>
+	;<param="int">the number of the wanted Key</param>
+	getKeyFromInt(int){
+		return this.keys[int]
+	}
+	
+	;===================== Methods End ==============================
+	
+	
+	;===================== Properties ===============================
+	;This property returns the current size of the dictionary
+	Size{
+		get{
+			return this.size
+		}
+	}
+	
+	Keys{
+		get{
+			return this.keys
+		}
+	}
+	
+	Values{
+		get{
+			return this.values
+		}
+	}
+	
+	/*
+	;ToDo - Figure a way to do this
+	Item[TKey]{
+		get{
+		
+		}
+		set{
+		
+		}
+	}
+	*/
+	
+	
+	;=================== Properties End =============================
 }
+
+
