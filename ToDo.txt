@@ -5,14 +5,16 @@ ToDo
 
 2) Make the keyboard appear on the screen the cursor is on
 
-2) Implement a controller profile that auto names and configures controllers based on the driver/controller type
+3a) Implement the same functionallity using XInput (https://autohotkey.com/boards/viewtopic.php?f=6&t=29659) for xbox controllers. This would be default for xbox controllers
 
-3) Come up with a way to optionally include the exended library (maybe just move the includes into the users ahk script)
+3b) Implement a controller profile that auto names and configures controllers based on the driver/controller type
 
-4) Optomize the Button Event Queue for better performance
+4) Come up with a way to optionally include the exended library (maybe just move the includes into the users ahk script)
 
-5) Optomize the buttonHandler() function
+5) Optomize the Button Event Queue for better performance
 
-6) Add documentation to the code added since last time
+6) Optomize the buttonHandler() function
 
-7) More
+7) Add documentation to the code added since last time
+
+8) More

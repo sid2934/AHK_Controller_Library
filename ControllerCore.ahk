@@ -324,7 +324,7 @@ class Controller{
 	; 2/3/4, 2_3_4_Event
 	; 1, 1_Event
 	; 3/5, 3_5_Event
-	controllerButtonQueue := new ButtonQueue()
+	controllerButtonQueue := new Queue()
 	;This is the previous State of the controller. This is used when handling double/long button presses
 	previousControllerState :=
 	;This is the current method for handling the joystick event calls
@@ -353,15 +353,13 @@ class Controller{
 
 		;The section to read in the button sub config section if buttons are enabled
 		if(buttonEnabled == true ){
-			;ToDo - get rid of the redundant boolean and just use buttonEnabled, etc
-			checkButtonsImplementation := true
 			;Reads the "Button Config" sub config in the config.ini file
 			IniRead, buttonConfigSection, %configPath%, Button Config
 			;If the section is empty of not found then the IniRead will set
 			;buttonConfigSection to ""
 			if(buttonConfigSection == ""){
 			MsgBox, BUTTONS DISABLED `nNo button config file was specified. Cannot use buttons without a Button Config Section
-			checkButtonsImplementation := false
+			buttonEnabled := false
 			}
 			else{
 				;Loops through one line of the section at a time
@@ -369,26 +367,51 @@ class Controller{
 				{
 					;A_LoopField is a built in variable and is set each iteration
 					;of the loop with the contents of the next line
-					;controllerButtonQueue.AddCombo in the function itself
-					this.controllerButtonQueue.AddCombo(A_LoopField)
+					
+					csvLine := A_LoopField
+					MsgBox % csvLine
+					StringSplit, output, csvLine, "`,"
+					;This creates a new buttonTrigger using the csvLine passed in
+					newTrigger := new buttonTrigger(output1, output2)
+					queueLength := this.controllerButtonQueue.Size
+					MsgBox % queueLength
+					;This conditional ensures that the new buttonTrigger is inserted in the 
+					;appropitate Location within the queue. The current implementation is 
+					;simply taking the buttonTriggers with the most keys involved and putting
+					;it first while this is certiantly not the best it works for now
+					;ToDo - Make the implementation of the queue much better
+					if(queueLength == 0){
+						MsgBox % "Should Be 0: "queueLength
+						this.controllerButtonQueue.Enqueue(newTrigger)
+					}
+					else{
+						loop %queueLength%{
+							tempQueueLocation := this.controllerButtonQueue.queue[A_Index]
+							x := tempQueueLocation.numberOfKeys
+							y := newTrigger.numberOfKeys
+							if(x < y){
+								this.controllerButtonQueue.Insert(newTrigger, A_Index)
+								break
+							}
+							else if(A_Index == queueLength){
+								this.controllerButtonQueue.Enqueue(newTrigger)
+							}
+						}
+					}
+					
 				}
 			}
-		}
-		else{
-			checkButtonsImplementation := false
 		}
 
 		;The section to read in the joystick sub config section if joystick are enabled
 		if(joystickEnabled == true ){
-			;ToDo - get rid of the redundant boolean and just use joystickEnabled, etc
-			checkJoystickImplementation := true
 			;Reads the "Joystick Config" sub config in the config.ini file
 			IniRead, joystickConfigSection, %configPath%, Joystick Config
 			;If the section is empty of not found then the IniRead will set
 			;joystickConfigSection to ""
 			if(joystickConfigSection == ""){
 			MsgBox, Joysticks DISABLED `nNo joystick config section was specified. Cannot use joysticks without a Joystick Config Section
-			checkJoystickImplementation := false
+			joystickEnabled := false
 			}
 			else{
 				;Loops through each line of the joystickConfigSection section
@@ -401,21 +424,16 @@ class Controller{
 				}
 			}
 		}
-		else{
-			checkJoystickImplementation := false
-		}
 
 		;The section to read in the pov sub config section if pov are enabled
 		if(povEnabled == true){
-			;ToDo - get rid of the redundant boolean and just use povEnabled, etc
-			checkPovImplementation := true
 			;Reads the "POV Config" sub config in the config.ini file
 			IniRead, povConfigSection, %configPath%, POV Config
 			;If the section is empty of not found then the IniRead will set
 			;povConfigSection to ""
 			if(povConfigSection == ""){
 				MsgBox, POV DISABLED `nNo pov config section was specified. Cannot use joysticks without a POV Config Section
-				checkPovImplementation := false
+				povEnabled := false
 			}
 			else{
 				;This loops through each line of the povConfigSection
@@ -437,21 +455,16 @@ class Controller{
 				}
 			}
 		}
-		else{
-			checkPovImplementation := false
-		}
 
 		;The section to read in the axes sub config section if axes are enabled
 		if(axesEnable == true){
-			;ToDo - get rid of the redundant boolean and just use axesEnable, etc
-			checkAxesImplementation := true
 			;Reads the "Axes Config" sub config in the config.ini file
 			IniRead, axesConfigSection, %configPath%, Axes Config
 			;If the section is empty of not found then the IniRead will set
 			;axesConfigSection to ""
 			if(axesConfigSection == ""){
 				MsgBox, Axes DISABLED `nNo axes config section was specified. Cannot use joysticks without a Axes Config Section
-				checkAxesImplementation := false
+				axesEnable := false
 			}
 			else{
 				;Loops through each of the lines in the axesConfigSection section
@@ -465,14 +478,11 @@ class Controller{
 				}
 			}
 		}
-		else{
-			checkAxesImplementation := false
-		}
 
 		;This calls the implementationCheck function with the params to ensure
 		;that all functions specified in the config.ini file are implemented in
 		;the code.
-		this.implementationCheck(checkButtonsImplementation, checkJoystickImplementation, checkPovImplementation, checkAxesImplementation)
+		this.implementationCheck(buttonEnabled, joystickEnabled, povEnabled, axesEnable)
 
 		;Finds the joystick if not specified as a parameter
 		;This code below is modified from the Joy Test.ahk file provided here
@@ -575,7 +585,7 @@ class Controller{
 		if(b == true){
 				buttonEvents := this.controllerButtonQueue.queue.Size
 				loop %buttonEvents%{
-					currentQueue := this.controllerButtonQueue.queue.queue[A_Index]
+					currentQueue := this.controllerButtonQueue.queue[A_Index]
 					currentFunction := currentQueue.eventHandler
 					if(IsFunc(currentFunction) == false){
 						MsgBox % currentFunction "() Does not exist"
@@ -743,10 +753,10 @@ class Controller{
 	;</summary>
 	;<param="pressedButtons">The state of all buttons at the time of the current cycle</param>
 	buttonHandler(pressedButtons){
-		numberOfCombos :=  this.controllerButtonQueue.queue.Size
+		numberOfCombos :=  this.controllerButtonQueue.Size
 		loop %numberOfCombos%{
 			buttonsMatch := true
-			currentQueue := this.controllerButtonQueue.queue.queue[A_Index]
+			currentQueue := this.controllerButtonQueue.queue[A_Index]
 			currentCheckKeys := currentQueue.trigger
 			StringSplit, currentCheckKeys, currentCheckKeys, /
 			currentNumberOfKeys := currentQueue.numberOfKeys
@@ -1040,52 +1050,6 @@ class buttonTrigger{
 
 }
 
-
-;ToDo - Remove this class to remove a queue access and speed up this script
-;<summary>
-;This class is used to create a transversable object for all the button events
-;in order to properly call the correct functions This approach is the second I
-;have tried but still needs work
-;</summary>
-class ButtonQueue{
-
-	;This is the constructor for the ButtonQueue
-	;One side effect of method is that to gain access to the actual queue you
-	;have to type ButtonQueue.queue.queue because how the Queue class works
-	__New(){
-		this.queue := new Queue()
-	}
-
-	;This functions is used to add combos to this instance of the ButtonQueue
-	AddCombo(csvLine){
-		StringSplit, output, csvLine, "`,"
-		;This creates a new buttonTrigger using the csvLine passed in
-		newTrigger := new buttonTrigger(output1, output2)
-		queueLength := this.queue.Size
-		;This conditional ensures that the new buttonTrigger is inserted in the 
-		;appropitate Location within the queue. The current implementation is 
-		;simply taking the buttonTriggers with the most keys involved and putting
-		;it first while this is certiantly not the best it works for now
-		;ToDo - Make the implementation of the queue much better
-		if(queueLength == 0){
-			this.queue.Enqueue(newTrigger)
-		}
-		else{
-			loop %queueLength%{
-				tempQueueLocation := this.queue.queue[A_Index]
-				x := tempQueueLocation.numberOfKeys
-				y := newTrigger.numberOfKeys
-				if(x <y){
-					this.queue.Insert(newTrigger, A_Index)
-				}
-				else if(A_Index == queueLength){
-					this.queue.Enqueue(newTrigger)
-				}
-			}
-		}
-	}
-
-}
 
 ;<summary>
 ;This class is used to make a queue data structure.
