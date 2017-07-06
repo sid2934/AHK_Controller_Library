@@ -369,19 +369,16 @@ class Controller{
 					;of the loop with the contents of the next line
 					
 					csvLine := A_LoopField
-					MsgBox % csvLine
 					StringSplit, output, csvLine, "`,"
 					;This creates a new buttonTrigger using the csvLine passed in
 					newTrigger := new buttonTrigger(output1, output2)
 					queueLength := this.controllerButtonQueue.Size
-					MsgBox % queueLength
 					;This conditional ensures that the new buttonTrigger is inserted in the 
 					;appropitate Location within the queue. The current implementation is 
 					;simply taking the buttonTriggers with the most keys involved and putting
 					;it first while this is certiantly not the best it works for now
 					;ToDo - Make the implementation of the queue much better
 					if(queueLength == 0){
-						MsgBox % "Should Be 0: "queueLength
 						this.controllerButtonQueue.Enqueue(newTrigger)
 					}
 					else{
@@ -826,7 +823,6 @@ class Controller{
 	;<param="povState">The state of the pov at the time of the current cycle</param>
 	povHandler(povState){
 		if(povState != -1){
-
 			functionToCall := this.povDict.TryGetValue(povState)
 			if(functionToCall != ""){
 				%functionToCall%()
@@ -1281,5 +1277,4 @@ class Dictionary{
 	
 	;=================== Properties End =============================
 }
-
 
