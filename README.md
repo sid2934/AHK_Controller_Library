@@ -1,5 +1,7 @@
+#Warning this repository is no longer being activly developed. If you need any assistance with it please make an issue and I will respond to it as soon as I can. If you want to use it and improve apon it please make pull requests.
 
-#AHK_Controller_Library
+
+# AHK_Controller_Library
 A Simple and Easy to Use AHK Controller Library
 
 This repository's goal is to develop an easy to implement AHK library to manipulate input from controllers / joystick / gamepads. AHK's current implementations is very simplistic and does not offer an easy way to access much of the useful. Current Release is Beta 0.1.0 updates should come out periodically.
@@ -11,7 +13,7 @@ This repository's goal is to develop an easy to implement AHK library to manipul
 ----------
 
 
-#Getting Started
+# Getting Started
 
 1) Download this repository (simple way press "clone or download" -> "download ZIP")
 2) Open the config.ini file and modify it to your needs
@@ -23,12 +25,12 @@ This repository's goal is to develop an easy to implement AHK library to manipul
 ----------
 
 
-#A Deeper Look
-##ControllerCore.ahk
+# A Deeper Look
+## ControllerCore.ahk
 The functionality for this library can be found in this file. The code is very well documented and moderately difficult to understand if no previous knowledge of AHK, but with basic knowledge it shouldn't take long to be able to modify it if needed.
 
 If you come across and bugs, issues, missing functionality, or huge performance issues please create an issues report on the repository to help the progress of the library.
-##Config.ini
+## Config.ini
 The config.ini file is where all user configuration happens. The ini file itself contains a bit of cvs as well in order to reduce the number of files needed for proper functionality.  Below is a sample ini file that would work with an Xbox 360 Wired Controller (Wireless and Xbox One should also work) and works with the given TestScript.ahk file
 
     [General]
@@ -120,7 +122,7 @@ These entries are NOT in typical ini format and instead use [csv format](https:/
 	1/2/3/4,1_2_3_4_Event
 The first will trigger the "2_Event" function when the 2 button is pressed, and the second will trigger the "1_2_3_4_Event" function when the four buttons (1, 2, 3, and 4) are pressed.
 
-##Making Your Custom Function Set
+## Making Your Custom Function Set
 
-##Extended Library
+## Extended Library
 
